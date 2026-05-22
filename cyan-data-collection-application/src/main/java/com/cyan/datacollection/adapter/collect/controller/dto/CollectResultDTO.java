@@ -31,6 +31,11 @@ public class CollectResultDTO {
     private String sampleId;
 
     /**
+     * 请求ID
+     */
+    private String requestId;
+
+    /**
      * 校验状态
      */
     private ValidateStatus validateStatus;

@@ -44,4 +44,9 @@ public interface TrackingReleaseService {
      * 发布上线
      */
     TrackingReleaseBO publish(String id);
+
+    /**
+     * 发布回滚
+     */
+    TrackingReleaseBO rollback(String id);
 }

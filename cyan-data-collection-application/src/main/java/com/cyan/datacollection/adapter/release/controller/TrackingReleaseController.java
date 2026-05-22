@@ -81,4 +81,10 @@ public class TrackingReleaseController implements TrackingReleaseClient {
         TrackingReleaseBO bo = trackingReleaseService.publish(id);
         return Response.success(TrackingReleaseAdapterConvert.INSTANCE.toClientDTO(bo));
     }
+
+    @PostMapping("/{id}/rollback")
+    public Response<TrackingReleaseDTO> rollback(@PathVariable("id") String id) {
+        TrackingReleaseBO bo = trackingReleaseService.rollback(id);
+        return Response.success(TrackingReleaseAdapterConvert.INSTANCE.toClientDTO(bo));
+    }
 }

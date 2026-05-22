@@ -15,6 +15,7 @@ public enum EventStatus {
     DRAFT("DRAFT", "草稿"),
     REVIEWING("REVIEWING", "待评审"),
     PUBLISHED("PUBLISHED", "已发布"),
+    FROZEN("FROZEN", "已冻结"),
     DEPRECATED("DEPRECATED", "已废弃");
 
     private final String code;

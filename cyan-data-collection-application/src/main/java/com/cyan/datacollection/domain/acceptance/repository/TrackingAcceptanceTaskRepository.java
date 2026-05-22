@@ -4,6 +4,8 @@ import com.cyan.arch.common.api.Page;
 import com.cyan.datacollection.domain.acceptance.TrackingAcceptanceTask;
 import com.cyan.datacollection.domain.acceptance.query.TrackingAcceptanceTaskPageQuery;
 
+import java.util.List;
+
 /**
  * 验收任务仓储
  *
@@ -36,6 +38,11 @@ public interface TrackingAcceptanceTaskRepository {
      * 根据ID删除
      */
     void deleteById(String id);
+
+    /**
+     * 根据方案ID查询验收任务
+     */
+    List<TrackingAcceptanceTask> findByPlanId(String planId);
 
     /**
      * 获取当天最大序号

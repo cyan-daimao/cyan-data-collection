@@ -2,6 +2,8 @@ package com.cyan.datacollection.domain.debug.repository;
 
 import com.cyan.datacollection.domain.debug.TrackingDebugSession;
 
+import java.util.List;
+
 /**
  * Debug 会话仓储
  *
@@ -17,4 +19,6 @@ public interface TrackingDebugSessionRepository {
     TrackingDebugSession save(TrackingDebugSession session);
 
     TrackingDebugSession update(TrackingDebugSession session);
+
+    List<TrackingDebugSession> listActiveSessions();
 }

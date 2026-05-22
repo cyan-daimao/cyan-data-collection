@@ -20,13 +20,18 @@ import com.cyan.datacollection.enums.AppStatus;
 import com.cyan.datacollection.enums.Environment;
 import com.cyan.datacollection.enums.TerminalType;
 import com.cyan.datacollection.enums.ValidateStatus;
+import com.cyan.datacollection.infra.kafka.TrackingEventKafkaProducer;
+import com.cyan.datacollection.infra.metrics.CollectMetricsService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 事件上报服务实现
@@ -43,22 +48,32 @@ public class TrackingCollectServiceImpl implements TrackingCollectService {
     private final TrackingEventSampleRepository trackingEventSampleRepository;
     private final TrackingDebugSessionRepository trackingDebugSessionRepository;
     private final TrackingEventValidateService trackingEventValidateService;
+    private final TrackingEventKafkaProducer trackingEventKafkaProducer;
+    private final CollectMetricsService collectMetricsService;
+
+    @Value("${data-collection.kafka.send-sync:false}")
+    private boolean sendSync;
 
     public TrackingCollectServiceImpl(TrackingAppRepository trackingAppRepository,
                                       TrackingEventRepository trackingEventRepository,
                                       TrackingEventSampleRepository trackingEventSampleRepository,
                                       TrackingDebugSessionRepository trackingDebugSessionRepository,
-                                      TrackingEventValidateService trackingEventValidateService) {
+                                      TrackingEventValidateService trackingEventValidateService,
+                                      TrackingEventKafkaProducer trackingEventKafkaProducer,
+                                      CollectMetricsService collectMetricsService) {
         this.trackingAppRepository = trackingAppRepository;
         this.trackingEventRepository = trackingEventRepository;
         this.trackingEventSampleRepository = trackingEventSampleRepository;
         this.trackingDebugSessionRepository = trackingDebugSessionRepository;
         this.trackingEventValidateService = trackingEventValidateService;
+        this.trackingEventKafkaProducer = trackingEventKafkaProducer;
+        this.collectMetricsService = collectMetricsService;
     }
 
     @Override
     @Transactional
     public CollectResultBO collect(EventCollectCmd cmd) {
+        long startTime = System.currentTimeMillis();
         List<String> errors = new ArrayList<>();
         ValidateStatus baseStatus = ValidateStatus.PASS;
 
@@ -148,11 +163,55 @@ public class TrackingCollectServiceImpl implements TrackingCollectService {
 
         sample = trackingEventSampleRepository.save(sample);
 
+        // 发送 Kafka
+        sendToKafka(cmd, finalStatus, errors);
+
+        // Metrics
+        collectMetricsService.recordHttpReceived(cmd.getAppCode(), cmd.getEventCode(), finalStatus.name());
+        collectMetricsService.recordDebugSampleSaved(cmd.getAppCode(), cmd.getEventCode(), finalStatus.name());
+        collectMetricsService.recordCollectDuration(cmd.getAppCode(), cmd.getEventCode(), System.currentTimeMillis() - startTime);
+
         return new CollectResultBO()
                 .setAccepted(true)
                 .setSampleId(sample.getId())
+                .setRequestId(cmd.getRequestId())
                 .setValidateStatus(finalStatus)
                 .setErrors(errors);
+    }
+
+    /**
+     * 将事件发送到 Kafka
+     */
+    private void sendToKafka(EventCollectCmd cmd, ValidateStatus finalStatus, List<String> errors) {
+        try {
+            Map<String, Object> message = new HashMap<>();
+            message.put("requestId", cmd.getRequestId());
+            message.put("appCode", cmd.getAppCode());
+            message.put("eventCode", cmd.getEventCode());
+            message.put("eventTime", cmd.getEventTime() != null ? cmd.getEventTime().toString() : null);
+            message.put("ingestionTime", LocalDateTime.now().toString());
+            message.put("terminalType", cmd.getTerminalType());
+            message.put("environment", cmd.getEnvironment());
+            message.put("userId", cmd.getUserId());
+            message.put("anonymousId", cmd.getAnonymousId());
+            message.put("sessionId", cmd.getSessionId());
+            message.put("deviceId", cmd.getDeviceId());
+            message.put("pageCode", cmd.getPageCode());
+            message.put("debugToken", cmd.getDebugToken());
+            message.put("validateStatus", finalStatus != null ? finalStatus.name() : null);
+            message.put("validateErrors", errors);
+            message.put("properties", cmd.getProperties());
+            message.put("payload", JSON.toJSONString(cmd));
+
+            if (sendSync) {
+                trackingEventKafkaProducer.sendSync(message);
+            } else {
+                trackingEventKafkaProducer.send(message);
+            }
+        } catch (Exception e) {
+            log.error("[Collect] Kafka 发送失败, requestId={}, eventCode={}", cmd.getRequestId(), cmd.getEventCode(), e);
+            // 最小交付版本：Kafka 发送失败不阻断返回，仅记录日志
+        }
     }
 
     @Override

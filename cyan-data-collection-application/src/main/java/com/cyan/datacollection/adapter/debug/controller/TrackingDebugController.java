@@ -16,6 +16,8 @@ import com.cyan.employee.login.filter.UserContextHolder;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * Debug 控制台控制器
  * API: ready
@@ -47,6 +49,14 @@ public class TrackingDebugController implements TrackingDebugClient {
     public Response<DebugSessionDTO> sessionDetail(@PathVariable("id") String id) {
         DebugSessionBO bo = trackingDebugService.sessionDetail(id);
         return Response.success(TrackingDebugAdapterConvert.INSTANCE.toClientSessionDTO(bo));
+    }
+
+    @GetMapping("/sessions")
+    public Response<List<DebugSessionDTO>> listActiveSessions() {
+        List<DebugSessionBO> bos = trackingDebugService.listActiveSessions();
+        return Response.success(bos.stream()
+                .map(TrackingDebugAdapterConvert.INSTANCE::toClientSessionDTO)
+                .toList());
     }
 
     @Override

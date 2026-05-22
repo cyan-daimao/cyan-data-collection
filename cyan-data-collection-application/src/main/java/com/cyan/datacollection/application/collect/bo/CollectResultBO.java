@@ -22,6 +22,7 @@ public class CollectResultBO {
 
     private Boolean accepted;
     private String sampleId;
+    private String requestId;
     private ValidateStatus validateStatus;
     private List<String> errors;
 }

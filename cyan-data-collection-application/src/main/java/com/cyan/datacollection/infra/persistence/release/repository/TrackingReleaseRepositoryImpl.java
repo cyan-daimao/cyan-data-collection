@@ -74,6 +74,18 @@ public class TrackingReleaseRepositoryImpl implements TrackingReleaseRepository 
     }
 
     @Override
+    public TrackingRelease findPreviousPublishedByPlanId(String planId, String excludeId) {
+        LambdaQueryWrapper<TrackingReleaseDO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(TrackingReleaseDO::getPlanId, Long.parseLong(planId));
+        wrapper.eq(TrackingReleaseDO::getStatus, ReleaseStatus.PUBLISHED);
+        wrapper.ne(TrackingReleaseDO::getId, Long.parseLong(excludeId));
+        wrapper.orderByDesc(TrackingReleaseDO::getCreatedAt);
+        wrapper.last("LIMIT 1");
+        TrackingReleaseDO dos = trackingReleaseMapper.selectOne(wrapper);
+        return dos == null ? null : TrackingReleaseInfraConvert.INSTANCE.toDomain(dos);
+    }
+
+    @Override
     public int findMaxSeqToday() {
         return trackingReleaseMapper.findMaxSeqToday();
     }

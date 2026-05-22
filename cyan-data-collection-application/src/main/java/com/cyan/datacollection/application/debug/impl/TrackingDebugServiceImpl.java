@@ -61,6 +61,12 @@ public class TrackingDebugServiceImpl implements TrackingDebugService {
     }
 
     @Override
+    public List<DebugSessionBO> listActiveSessions() {
+        List<TrackingDebugSession> sessions = trackingDebugSessionRepository.listActiveSessions();
+        return sessions.stream().map(this::toDebugSessionBO).toList();
+    }
+
+    @Override
     public Page<DebugEventSampleBO> eventPage(TrackingEventSamplePageQuery query) {
         Page<TrackingEventSample> page = trackingEventSampleRepository.page(query);
         List<DebugEventSampleBO> list = page.getData().stream()

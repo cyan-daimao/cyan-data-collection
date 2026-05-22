@@ -6,6 +6,8 @@ import com.cyan.datacollection.application.debug.bo.DebugSessionBO;
 import com.cyan.datacollection.application.debug.cmd.DebugSessionCmd;
 import com.cyan.datacollection.domain.collect.query.TrackingEventSamplePageQuery;
 
+import java.util.List;
+
 /**
  * Debug 控制台服务
  *
@@ -17,6 +19,8 @@ public interface TrackingDebugService {
     DebugSessionBO createSession(DebugSessionCmd cmd);
 
     DebugSessionBO sessionDetail(String id);
+
+    List<DebugSessionBO> listActiveSessions();
 
     Page<DebugEventSampleBO> eventPage(TrackingEventSamplePageQuery query);
 

@@ -85,4 +85,16 @@ public class TrackingEventPropertyDO {
     @TableField("deleted_at")
     @TableLogic(value = "null", delval = "now()")
     private LocalDateTime deletedAt;
+
+    /**
+     * 创建人
+     */
+    @TableField("created_by")
+    private String createdBy;
+
+    /**
+     * 更新人
+     */
+    @TableField("updated_by")
+    private String updatedBy;
 }

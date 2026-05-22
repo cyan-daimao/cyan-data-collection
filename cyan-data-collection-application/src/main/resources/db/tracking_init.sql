@@ -66,6 +66,8 @@ CREATE TABLE IF NOT EXISTS tracking_event_property (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at DATETIME DEFAULT NULL,
+    created_by VARCHAR(128),
+    updated_by VARCHAR(128),
     UNIQUE KEY uk_event_property (event_id, property_id),
     INDEX idx_event_id (event_id),
     INDEX idx_property_id (property_id)
@@ -319,3 +321,87 @@ CREATE TABLE IF NOT EXISTS tracking_alert (
     INDEX idx_event_code (event_code),
     INDEX idx_triggered_at (triggered_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='埋点质量告警表';
+
+-- 质量规则配置表
+CREATE TABLE IF NOT EXISTS tracking_quality_rule (
+    id BIGINT NOT NULL PRIMARY KEY,
+    rule_code VARCHAR(128) NOT NULL COMMENT '规则编码',
+    rule_name VARCHAR(255) NOT NULL COMMENT '规则名称',
+    event_code VARCHAR(128) COMMENT '为空表示全局规则',
+    app_code VARCHAR(128) COMMENT '为空表示全局规则',
+    alert_type VARCHAR(64) NOT NULL COMMENT 'NO_DATA, FAIL_RATE_HIGH, PROPERTY_MISSING',
+    threshold_value DECIMAL(10,4) COMMENT '阈值：失败率用小数，断流用小时数',
+    time_window_minutes INT DEFAULT 60 COMMENT '时间窗口（分钟）',
+    alert_level VARCHAR(64) NOT NULL COMMENT 'INFO, WARN, ERROR',
+    notify_targets TEXT COMMENT '通知对象 JSON',
+    is_enabled TINYINT DEFAULT 1 COMMENT '是否启用: 0-否, 1-是',
+    is_core_event_only TINYINT DEFAULT 0 COMMENT '是否仅核心事件: 0-否, 1-是',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME DEFAULT NULL,
+    created_by VARCHAR(128),
+    updated_by VARCHAR(128),
+    UNIQUE KEY uk_rule_code (rule_code),
+    INDEX idx_event_code (event_code),
+    INDEX idx_app_code (app_code),
+    INDEX idx_enabled (is_enabled)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='质量规则配置表';
+
+-- ============================================
+-- 平台自身 module_click 事件和属性初始化数据
+-- ============================================
+
+-- module_click 事件
+INSERT INTO tracking_event (id, event_code, event_name, event_type, business_domain, description, trigger_timing, terminal_types, owner, is_core, status, version, created_by, updated_by)
+VALUES (1000001, 'module_click', '模块点击', 'CLICK', 'platform', '平台模块点击事件，用于统计各模块的访问热度', '用户点击平台左侧菜单、顶部导航或首页模块卡片时触发', 'WEB', 'system', 1, 'PUBLISHED', 1, 'system', 'system')
+ON DUPLICATE KEY UPDATE updated_at = CURRENT_TIMESTAMP;
+
+-- module_click 属性
+INSERT INTO tracking_property (id, property_code, property_name, property_type, data_type, description, is_required, is_sensitive, status, version, created_by, updated_by)
+VALUES
+(1000001, 'module_code', '模块编码', 'EVENT', 'STRING', '模块稳定编码，如 data_assets、data_collection', 1, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000002, 'module_name', '模块名称', 'EVENT', 'STRING', '模块名称，如 数据资产、数据采集', 1, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000003, 'parent_module_code', '父模块编码', 'EVENT', 'STRING', '父模块编码，如一级菜单编码', 0, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000004, 'route_path', '路由路径', 'EVENT', 'STRING', '点击后跳转的路由路径，如 /data-assets', 1, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000005, 'click_position', '点击位置', 'EVENT', 'STRING', '点击位置，如 sidebar_menu、top_nav、home_card', 0, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000006, 'source_page', '来源页面', 'EVENT', 'STRING', '点击来源页面编码', 0, 0, 'PUBLISHED', 1, 'system', 'system')
+ON DUPLICATE KEY UPDATE updated_at = CURRENT_TIMESTAMP;
+
+-- module_click 事件属性绑定
+INSERT INTO tracking_event_property (id, event_id, property_id, is_required, description, created_by, updated_by)
+VALUES
+(1000001, 1000001, 1000001, 1, '模块编码', 'system', 'system'),
+(1000002, 1000001, 1000002, 1, '模块名称', 'system', 'system'),
+(1000003, 1000001, 1000003, 0, '父模块编码', 'system', 'system'),
+(1000004, 1000001, 1000004, 1, '路由路径', 'system', 'system'),
+(1000005, 1000001, 1000005, 0, '点击位置', 'system', 'system'),
+(1000006, 1000001, 1000006, 0, '来源页面', 'system', 'system')
+ON DUPLICATE KEY UPDATE updated_at = CURRENT_TIMESTAMP;
+
+
+-- 采集指标链路表
+CREATE TABLE IF NOT EXISTS tracking_metric_pipeline (
+    id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    metric_code VARCHAR(128) NOT NULL COMMENT '指标编码',
+    metric_name VARCHAR(255) NOT NULL COMMENT '指标名称',
+    event_code VARCHAR(128) NOT NULL COMMENT '来源事件编码',
+    app_code VARCHAR(128) COMMENT '应用编码',
+    dimensions_json TEXT COMMENT '维度字段JSON',
+    measures_json TEXT COMMENT '指标度量JSON',
+    topic_name VARCHAR(255) NOT NULL COMMENT 'Kafka Topic',
+    ods_table_name VARCHAR(255) NOT NULL COMMENT 'ODS表',
+    dwd_table_name VARCHAR(255) NOT NULL COMMENT 'DWD表',
+    dws_table_name VARCHAR(255) NOT NULL COMMENT 'DWS表',
+    ads_table_name VARCHAR(255) NOT NULL COMMENT 'ADS表',
+    dataworks_job_id VARCHAR(128) COMMENT 'DataWorks作业ID',
+    dataworks_instance_id VARCHAR(128) COMMENT 'DataWorks实例ID',
+    flink_deployment_name VARCHAR(255) COMMENT 'FlinkDeployment名称',
+    status VARCHAR(64) NOT NULL DEFAULT 'DRAFT' COMMENT 'DRAFT,TABLE_CREATED,JOB_CREATED,RUNNING,FAILED',
+    error_message TEXT COMMENT '错误信息',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME DEFAULT NULL,
+    created_by VARCHAR(128),
+    updated_by VARCHAR(128),
+    UNIQUE KEY uk_metric_code (metric_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='采集指标链路表';

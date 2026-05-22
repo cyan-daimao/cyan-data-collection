@@ -38,6 +38,11 @@ public interface TrackingReleaseRepository {
     void deleteById(String id);
 
     /**
+     * 查询方案上一已发布版本
+     */
+    TrackingRelease findPreviousPublishedByPlanId(String planId, String excludeId);
+
+    /**
      * 获取当天最大序号
      */
     int findMaxSeqToday();
