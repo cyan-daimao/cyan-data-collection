@@ -19,11 +19,16 @@ import com.cyan.datacollection.domain.plan.repository.TrackingPlanEventRepositor
 import com.cyan.datacollection.domain.plan.repository.TrackingPlanRepository;
 import com.cyan.datacollection.domain.property.TrackingProperty;
 import com.cyan.datacollection.domain.property.repository.TrackingPropertyRepository;
+import com.cyan.datacollection.domain.acceptance.TrackingAcceptanceTask;
+import com.cyan.datacollection.domain.acceptance.repository.TrackingAcceptanceTaskRepository;
 import com.cyan.datacollection.domain.release.TrackingRelease;
 import com.cyan.datacollection.domain.release.TrackingReleaseItem;
 import com.cyan.datacollection.domain.release.query.TrackingReleasePageQuery;
 import com.cyan.datacollection.domain.release.repository.TrackingReleaseItemRepository;
 import com.cyan.datacollection.domain.release.repository.TrackingReleaseRepository;
+import com.cyan.datacollection.enums.AcceptanceStatus;
+import com.cyan.datacollection.enums.EventStatus;
+import com.cyan.datacollection.enums.ReleaseStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +37,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -51,6 +57,7 @@ public class TrackingReleaseServiceImpl implements TrackingReleaseService {
     private final TrackingEventRepository trackingEventRepository;
     private final TrackingEventPropertyRepository trackingEventPropertyRepository;
     private final TrackingPropertyRepository trackingPropertyRepository;
+    private final TrackingAcceptanceTaskRepository trackingAcceptanceTaskRepository;
     private final ReleaseCodeGenerator releaseCodeGenerator;
 
     public TrackingReleaseServiceImpl(TrackingReleaseRepository trackingReleaseRepository,
@@ -60,6 +67,7 @@ public class TrackingReleaseServiceImpl implements TrackingReleaseService {
                                       TrackingEventRepository trackingEventRepository,
                                       TrackingEventPropertyRepository trackingEventPropertyRepository,
                                       TrackingPropertyRepository trackingPropertyRepository,
+                                      TrackingAcceptanceTaskRepository trackingAcceptanceTaskRepository,
                                       ReleaseCodeGenerator releaseCodeGenerator) {
         this.trackingReleaseRepository = trackingReleaseRepository;
         this.trackingReleaseItemRepository = trackingReleaseItemRepository;
@@ -68,6 +76,7 @@ public class TrackingReleaseServiceImpl implements TrackingReleaseService {
         this.trackingEventRepository = trackingEventRepository;
         this.trackingEventPropertyRepository = trackingEventPropertyRepository;
         this.trackingPropertyRepository = trackingPropertyRepository;
+        this.trackingAcceptanceTaskRepository = trackingAcceptanceTaskRepository;
         this.releaseCodeGenerator = releaseCodeGenerator;
     }
 
@@ -197,9 +206,60 @@ public class TrackingReleaseServiceImpl implements TrackingReleaseService {
 
     @Override
     public List<TrackingReleaseBO.ItemBO> diff(String id) {
-        // MVP：返回当前发布的明细列表
-        TrackingReleaseBO bo = detail(id);
-        return bo.getItems();
+        TrackingRelease current = trackingReleaseRepository.findById(id);
+        Assert.notNull(current, new SilentException("发布版本不存在"));
+
+        // 查找上一版本
+        TrackingRelease previous = trackingReleaseRepository.findPreviousPublishedByPlanId(current.getPlanId(), id);
+        List<TrackingReleaseItem> currentItems = trackingReleaseItemRepository.findByReleaseId(id);
+        List<TrackingReleaseItem> previousItems = previous != null
+                ? trackingReleaseItemRepository.findByReleaseId(previous.getId())
+                : List.of();
+
+        Map<String, TrackingReleaseItem> prevMap = new LinkedHashMap<>();
+        for (TrackingReleaseItem item : previousItems) {
+            prevMap.put(item.getItemType() + "_" + item.getItemCode(), item);
+        }
+
+        List<TrackingReleaseBO.ItemBO> result = new ArrayList<>();
+        // 标记新增和修改
+        for (TrackingReleaseItem item : currentItems) {
+            String key = item.getItemType() + "_" + item.getItemCode();
+            TrackingReleaseItem prev = prevMap.get(key);
+            String changeType;
+            if (prev == null) {
+                changeType = "ADD";
+            } else if (!Objects.equals(prev.getSnapshot(), item.getSnapshot())) {
+                changeType = "UPDATE";
+            } else {
+                changeType = "UNCHANGED";
+            }
+            if (!"UNCHANGED".equals(changeType)) {
+                result.add(new TrackingReleaseBO.ItemBO()
+                        .setId(item.getId())
+                        .setReleaseId(item.getReleaseId())
+                        .setItemType(item.getItemType())
+                        .setItemId(item.getItemId())
+                        .setItemCode(item.getItemCode())
+                        .setChangeType(changeType)
+                        .setSnapshot(item.getSnapshot())
+                        .setCreatedAt(item.getCreatedAt()));
+            }
+            prevMap.remove(key);
+        }
+        // 标记删除
+        for (TrackingReleaseItem removed : prevMap.values()) {
+            result.add(new TrackingReleaseBO.ItemBO()
+                    .setId(removed.getId())
+                    .setReleaseId(removed.getReleaseId())
+                    .setItemType(removed.getItemType())
+                    .setItemId(removed.getItemId())
+                    .setItemCode(removed.getItemCode())
+                    .setChangeType("DELETE")
+                    .setSnapshot(removed.getSnapshot())
+                    .setCreatedAt(removed.getCreatedAt()));
+        }
+        return result;
     }
 
     @Override
@@ -207,6 +267,10 @@ public class TrackingReleaseServiceImpl implements TrackingReleaseService {
     public TrackingReleaseBO submit(String id) {
         TrackingRelease release = trackingReleaseRepository.findById(id);
         Assert.notNull(release, new SilentException("发布版本不存在"));
+
+        // 发布前强制验收检查
+        assertAcceptancePassed(release.getPlanId());
+
         release = release.submit(trackingReleaseRepository);
         return TrackingReleaseAppConvert.INSTANCE.toBO(release);
     }
@@ -220,12 +284,69 @@ public class TrackingReleaseServiceImpl implements TrackingReleaseService {
         TrackingPlan plan = trackingPlanRepository.findById(release.getPlanId());
         Assert.notNull(plan, new SilentException("方案不存在"));
 
+        // 发布前强制验收检查
+        assertAcceptancePassed(release.getPlanId());
+
         // 更新 release 状态为 PUBLISHED
         release = release.publish(trackingReleaseRepository);
 
         // 更新 plan 状态为 PUBLISHED 并设置 publishedVersionId
         plan.publish(trackingPlanRepository, release.getId());
 
+        // 发布后冻结事件和属性
+        freezePlanEvents(plan.getId());
+
         return TrackingReleaseAppConvert.INSTANCE.toBO(release);
+    }
+
+    @Override
+    @Transactional
+    public TrackingReleaseBO rollback(String id) {
+        TrackingRelease release = trackingReleaseRepository.findById(id);
+        Assert.notNull(release, new SilentException("发布版本不存在"));
+        Assert.isTrue(release.getStatus() == ReleaseStatus.PUBLISHED, new SilentException("仅已发布版本可回滚"));
+
+        TrackingPlan plan = trackingPlanRepository.findById(release.getPlanId());
+        Assert.notNull(plan, new SilentException("方案不存在"));
+
+        // 查找上一版本
+        TrackingRelease previous = trackingReleaseRepository.findPreviousPublishedByPlanId(release.getPlanId(), id);
+        Assert.notNull(previous, new SilentException("无上一版本可回滚"));
+
+        // 回滚方案状态到上一版本
+        plan.setPublishedVersionId(previous.getId());
+        plan.setVersion(previous.getVersion());
+        plan.update(trackingPlanRepository);
+
+        // 标记当前发布为已回滚
+        release.setStatus(ReleaseStatus.ROLLED_BACK);
+        trackingReleaseRepository.update(release);
+
+        return TrackingReleaseAppConvert.INSTANCE.toBO(release);
+    }
+
+    /**
+     * 断言方案存在验收通过记录
+     */
+    private void assertAcceptancePassed(String planId) {
+        List<TrackingAcceptanceTask> tasks = trackingAcceptanceTaskRepository.findByPlanId(planId);
+        boolean hasPass = tasks.stream().anyMatch(t -> t.getStatus() == AcceptanceStatus.PASS);
+        if (!hasPass) {
+            throw new SilentException("方案未通过验收，无法提交或发布");
+        }
+    }
+
+    /**
+     * 冻结方案下所有事件和属性
+     */
+    private void freezePlanEvents(String planId) {
+        List<TrackingPlanEventRelation> relations = trackingPlanEventRepository.findByPlanId(planId);
+        for (TrackingPlanEventRelation relation : relations) {
+            TrackingEvent event = trackingEventRepository.findById(relation.getEventId());
+            if (event != null && event.getStatus() == EventStatus.PUBLISHED) {
+                event.setStatus(EventStatus.FROZEN);
+                event.update(trackingEventRepository);
+            }
+        }
     }
 }

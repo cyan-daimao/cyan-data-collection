@@ -9,6 +9,7 @@ import com.cyan.datacollection.infra.persistence.debug.mappers.TrackingDebugSess
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Debug 会话仓储实现
@@ -54,5 +55,14 @@ public class TrackingDebugSessionRepositoryImpl implements TrackingDebugSessionR
         trackingDebugSessionDO.setUpdatedAt(LocalDateTime.now());
         trackingDebugSessionMapper.updateById(trackingDebugSessionDO);
         return findById(session.getId());
+    }
+
+    @Override
+    public List<TrackingDebugSession> listActiveSessions() {
+        LambdaQueryWrapper<TrackingDebugSessionDO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(TrackingDebugSessionDO::getStatus, "ACTIVE");
+        wrapper.orderByDesc(TrackingDebugSessionDO::getCreatedAt);
+        List<TrackingDebugSessionDO> dos = trackingDebugSessionMapper.selectList(wrapper);
+        return dos.stream().map(TrackingDebugSessionInfraConvert.INSTANCE::toTrackingDebugSession).toList();
     }
 }

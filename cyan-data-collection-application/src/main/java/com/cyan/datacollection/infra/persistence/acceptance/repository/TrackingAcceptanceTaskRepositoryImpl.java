@@ -76,6 +76,15 @@ public class TrackingAcceptanceTaskRepositoryImpl implements TrackingAcceptanceT
     }
 
     @Override
+    public List<TrackingAcceptanceTask> findByPlanId(String planId) {
+        LambdaQueryWrapper<TrackingAcceptanceTaskDO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(TrackingAcceptanceTaskDO::getPlanId, Long.parseLong(planId));
+        wrapper.orderByDesc(TrackingAcceptanceTaskDO::getCreatedAt);
+        List<TrackingAcceptanceTaskDO> dos = trackingAcceptanceTaskMapper.selectList(wrapper);
+        return dos.stream().map(TrackingAcceptanceInfraConvert.INSTANCE::toTaskDomain).toList();
+    }
+
+    @Override
     public int findMaxSeqToday() {
         return trackingAcceptanceTaskMapper.findMaxSeqToday();
     }

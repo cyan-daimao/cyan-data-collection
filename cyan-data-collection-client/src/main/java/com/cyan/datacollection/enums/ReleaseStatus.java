@@ -15,6 +15,7 @@ public enum ReleaseStatus {
     DRAFT("DRAFT", "草稿"),
     SUBMITTED("SUBMITTED", "已提交"),
     PUBLISHED("PUBLISHED", "已发布"),
+    ROLLED_BACK("ROLLED_BACK", "已回滚"),
     CANCELED("CANCELED", "已取消");
 
     private final String code;

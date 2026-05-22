@@ -18,8 +18,12 @@ import com.cyan.datacollection.domain.collect.TrackingEventSample;
 import com.cyan.datacollection.domain.collect.repository.TrackingEventSampleRepository;
 import com.cyan.datacollection.domain.event.TrackingEvent;
 import com.cyan.datacollection.domain.event.repository.TrackingEventRepository;
+import com.cyan.datacollection.domain.eventproperty.TrackingEventProperty;
+import com.cyan.datacollection.domain.eventproperty.repository.TrackingEventPropertyRepository;
 import com.cyan.datacollection.domain.plan.TrackingPlanEventRelation;
 import com.cyan.datacollection.domain.plan.repository.TrackingPlanEventRepository;
+import com.cyan.datacollection.domain.property.TrackingProperty;
+import com.cyan.datacollection.domain.property.repository.TrackingPropertyRepository;
 import com.cyan.datacollection.enums.AcceptanceStatus;
 import com.cyan.datacollection.enums.ValidateStatus;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -48,6 +53,8 @@ public class TrackingAcceptanceServiceImpl implements TrackingAcceptanceService 
     private final TrackingPlanEventRepository trackingPlanEventRepository;
     private final TrackingEventSampleRepository trackingEventSampleRepository;
     private final TrackingEventRepository trackingEventRepository;
+    private final TrackingEventPropertyRepository trackingEventPropertyRepository;
+    private final TrackingPropertyRepository trackingPropertyRepository;
     private final AcceptanceTaskCodeGenerator acceptanceTaskCodeGenerator;
 
     public TrackingAcceptanceServiceImpl(TrackingAcceptanceTaskRepository trackingAcceptanceTaskRepository,
@@ -55,12 +62,16 @@ public class TrackingAcceptanceServiceImpl implements TrackingAcceptanceService 
                                          TrackingPlanEventRepository trackingPlanEventRepository,
                                          TrackingEventSampleRepository trackingEventSampleRepository,
                                          TrackingEventRepository trackingEventRepository,
+                                         TrackingEventPropertyRepository trackingEventPropertyRepository,
+                                         TrackingPropertyRepository trackingPropertyRepository,
                                          AcceptanceTaskCodeGenerator acceptanceTaskCodeGenerator) {
         this.trackingAcceptanceTaskRepository = trackingAcceptanceTaskRepository;
         this.trackingAcceptanceResultRepository = trackingAcceptanceResultRepository;
         this.trackingPlanEventRepository = trackingPlanEventRepository;
         this.trackingEventSampleRepository = trackingEventSampleRepository;
         this.trackingEventRepository = trackingEventRepository;
+        this.trackingEventPropertyRepository = trackingEventPropertyRepository;
+        this.trackingPropertyRepository = trackingPropertyRepository;
         this.acceptanceTaskCodeGenerator = acceptanceTaskCodeGenerator;
     }
 
@@ -135,7 +146,7 @@ public class TrackingAcceptanceServiceImpl implements TrackingAcceptanceService 
             eventIdToCodeMap = Map.of();
         }
 
-        // 3. 对每个方案内事件生成验收结果
+        // 3. 对每个方案内事件生成验收结果（含属性级校验）
         List<TrackingAcceptanceResult> results = new ArrayList<>();
         int coveredEventCount = 0;
         int totalPassSampleCount = 0;
@@ -145,7 +156,6 @@ public class TrackingAcceptanceServiceImpl implements TrackingAcceptanceService 
             String eventId = planEvent.getEventId();
             String eventCode = eventIdToCodeMap.get(eventId);
             if (eventCode == null) {
-                // 未找到对应事件编码，标记为失败
                 results.add(new TrackingAcceptanceResult()
                         .setTaskId(id)
                         .setEventId(eventId)
@@ -170,7 +180,18 @@ public class TrackingAcceptanceServiceImpl implements TrackingAcceptanceService 
                     .map(TrackingEventSample::getId)
                     .toList();
 
+            // 属性级校验
             List<String> errorItems = new ArrayList<>();
+            List<TrackingEventProperty> eventProperties = trackingEventPropertyRepository.findByEventId(eventId);
+            if (hasPass && !eventProperties.isEmpty()) {
+                for (TrackingEventProperty ep : eventProperties) {
+                    TrackingProperty property = trackingPropertyRepository.findById(ep.getPropertyId());
+                    if (property == null) continue;
+                    List<String> propErrors = validatePropertyInSamples(property, ep, passSamples);
+                    errorItems.addAll(propErrors);
+                }
+            }
+
             if (!hasPass) {
                 if (eventSamples.isEmpty()) {
                     errorItems.add("未找到样本数据");
@@ -187,11 +208,12 @@ public class TrackingAcceptanceServiceImpl implements TrackingAcceptanceService 
                 }
             }
 
+            String resultStatus = hasPass && errorItems.isEmpty() ? "PASS" : (hasPass ? "WARN" : "FAIL");
             results.add(new TrackingAcceptanceResult()
                     .setTaskId(id)
                     .setEventId(eventId)
                     .setEventCode(eventCode)
-                    .setStatus(hasPass ? "PASS" : "FAIL")
+                    .setStatus(resultStatus)
                     .setErrorItems(errorItems)
                     .setSampleIds(sampleIds));
         }
@@ -213,9 +235,16 @@ public class TrackingAcceptanceServiceImpl implements TrackingAcceptanceService 
         }
 
         // 6. 更新任务状态和统计
-        AcceptanceStatus finalStatus = coveredEventCount >= totalEventCount && totalEventCount > 0
-                ? AcceptanceStatus.PASS
-                : AcceptanceStatus.FAIL;
+        boolean allPass = results.stream().allMatch(r -> "PASS".equals(r.getStatus()));
+        boolean hasFail = results.stream().anyMatch(r -> "FAIL".equals(r.getStatus()));
+        AcceptanceStatus finalStatus;
+        if (allPass && totalEventCount > 0) {
+            finalStatus = AcceptanceStatus.PASS;
+        } else if (hasFail) {
+            finalStatus = AcceptanceStatus.FAIL;
+        } else {
+            finalStatus = AcceptanceStatus.RUNNING; // 有 WARN，保持 RUNNING 待人工确认
+        }
         task.setStatus(finalStatus);
         task.setEventCoverageRate(eventCoverageRate);
         task.setRequiredPropertyCompleteRate(requiredPropertyCompleteRate);
@@ -241,5 +270,66 @@ public class TrackingAcceptanceServiceImpl implements TrackingAcceptanceService 
         Assert.notNull(task, new SilentException("验收任务不存在"));
         task = task.reject(trackingAcceptanceTaskRepository);
         return TrackingAcceptanceAppConvert.INSTANCE.toTaskBO(task);
+    }
+
+    /**
+     * 校验属性在样本中的表现
+     */
+    private List<String> validatePropertyInSamples(TrackingProperty property, TrackingEventProperty ep,
+                                                    List<TrackingEventSample> samples) {
+        List<String> errors = new ArrayList<>();
+        int missingCount = 0;
+        int typeErrorCount = 0;
+        int enumErrorCount = 0;
+
+        for (TrackingEventSample sample : samples) {
+            Map<String, Object> payloadMap = com.alibaba.fastjson2.JSON.parseObject(sample.getPayload(), Map.class);
+            Map<String, Object> properties = payloadMap != null ? (Map<String, Object>) payloadMap.get("properties") : null;
+            if (properties == null) {
+                missingCount++;
+                continue;
+            }
+
+            Object value = properties.get(property.getPropertyCode());
+            if (value == null || (value instanceof String && ((String) value).isEmpty())) {
+                if (Boolean.TRUE.equals(ep.getIsRequired())) {
+                    missingCount++;
+                }
+                continue;
+            }
+
+            // 类型校验
+            String dataType = property.getDataType() != null ? property.getDataType().name() : null;
+            if (dataType != null) {
+                boolean typeOk = switch (dataType) {
+                    case "STRING", "ENUM" -> value instanceof String;
+                    case "NUMBER" -> value instanceof Number;
+                    case "BOOLEAN" -> value instanceof Boolean;
+                    default -> true;
+                };
+                if (!typeOk) {
+                    typeErrorCount++;
+                }
+            }
+
+            // 枚举校验
+            if ("ENUM".equals(dataType) && property.getEnumValues() != null && !property.getEnumValues().isEmpty()) {
+                String strValue = value.toString();
+                if (!property.getEnumValues().contains(strValue)) {
+                    enumErrorCount++;
+                }
+            }
+        }
+
+        if (missingCount > 0) {
+            errors.add(String.format("属性 %s: %d 个样本缺失必填值", property.getPropertyCode(), missingCount));
+        }
+        if (typeErrorCount > 0) {
+            errors.add(String.format("属性 %s: %d 个样本类型错误", property.getPropertyCode(), typeErrorCount));
+        }
+        if (enumErrorCount > 0) {
+            errors.add(String.format("属性 %s: %d 个样本枚举值不合法", property.getPropertyCode(), enumErrorCount));
+        }
+        return errors;
     }
 }

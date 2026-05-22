@@ -19,3 +19,21 @@ spring:
     username: root
     password: 123456
     url: jdbc:mysql://10.0.0.2:3306/cyan_data_collection?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
+  kafka:
+    bootstrap-servers: 10.0.0.2:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+      properties:
+        max.block.ms: 3000
+        request.timeout.ms: 3000
+        delivery.timeout.ms: 10000
+        reconnect.backoff.ms: 500
+        reconnect.backoff.max.ms: 3000
+
+data-collection:
+  kafka:
+    topic: cyan_data_collection_event_raw
+    send-sync: false
