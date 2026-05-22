@@ -21,4 +21,9 @@ public interface TrackingEventSampleRepository {
     TrackingEventSample save(TrackingEventSample sample);
 
     List<TrackingEventSample> saveBatch(List<TrackingEventSample> samples);
+
+    /**
+     * 根据 debugToken 查询样本列表
+     */
+    List<TrackingEventSample> findByDebugToken(String debugToken);
 }

@@ -181,6 +181,21 @@ public class TrackingPlan {
     }
 
     /**
+     * 发布上线
+     */
+    public TrackingPlan publish(TrackingPlanRepository repository, String releaseId) {
+        Assert.notBlank(this.id, new SilentException("方案ID不能为空"));
+        if (this.status == PlanStatus.PUBLISHED) {
+            throw new SilentException("方案已发布");
+        }
+        this.status = PlanStatus.PUBLISHED;
+        this.publishedVersionId = releaseId;
+        this.version = (this.version == null ? 1 : this.version) + 1;
+        this.updatedAt = LocalDateTime.now();
+        return repository.update(this);
+    }
+
+    /**
      * 方案内事件引用
      */
     @Data

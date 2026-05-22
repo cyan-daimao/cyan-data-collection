@@ -2,8 +2,10 @@ package com.cyan.datacollection.adapter.event.controller;
 
 import com.cyan.arch.common.api.Response;
 import com.cyan.datacollection.adapter.common.PageResultDTO;
+import com.cyan.datacollection.adapter.event.controller.dto.EventPropertyDTO;
 import com.cyan.datacollection.adapter.event.controller.dto.TrackingEventDTO;
 import com.cyan.datacollection.adapter.event.controller.dto.TrackingEventUsageDTO;
+import com.cyan.datacollection.adapter.event.controller.request.EventPropertyConfigRequest;
 import com.cyan.datacollection.adapter.event.controller.request.TrackingEventCreateRequest;
 import com.cyan.datacollection.adapter.event.controller.request.TrackingEventPageQuery;
 import com.cyan.datacollection.adapter.event.controller.request.TrackingEventUpdateRequest;
@@ -13,6 +15,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+
+import java.util.List;
 
 /**
  * 事件定义 Feign 客户端
@@ -64,4 +68,16 @@ public interface TrackingEventClient {
      */
     @GetMapping("/{id}/usage")
     Response<TrackingEventUsageDTO> usage(@PathVariable("id") String id);
+
+    /**
+     * 配置事件属性
+     */
+    @PutMapping("/{id}/properties")
+    Response<Void> configProperties(@PathVariable("id") String id, @RequestBody List<EventPropertyConfigRequest> requests);
+
+    /**
+     * 查询事件属性列表
+     */
+    @GetMapping("/{id}/properties")
+    Response<List<EventPropertyDTO>> listProperties(@PathVariable("id") String id);
 }

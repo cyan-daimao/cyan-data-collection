@@ -5,16 +5,22 @@ import com.cyan.datacollection.adapter.event.controller.convert.TrackingEventAda
 import com.cyan.datacollection.application.event.TrackingEventService;
 import com.cyan.datacollection.application.event.bo.TrackingEventBO;
 import com.cyan.datacollection.application.event.cmd.TrackingEventCmd;
+import com.cyan.datacollection.application.eventproperty.TrackingEventPropertyService;
+import com.cyan.datacollection.application.eventproperty.bo.EventPropertyBO;
+import com.cyan.datacollection.application.eventproperty.cmd.EventPropertyConfigCmd;
 import com.cyan.datacollection.adapter.common.PageResultDTO;
-import com.cyan.datacollection.adapter.event.controller.TrackingEventClient;
+import com.cyan.datacollection.adapter.event.controller.dto.EventPropertyDTO;
 import com.cyan.datacollection.adapter.event.controller.dto.TrackingEventDTO;
 import com.cyan.datacollection.adapter.event.controller.dto.TrackingEventUsageDTO;
+import com.cyan.datacollection.adapter.event.controller.request.EventPropertyConfigRequest;
 import com.cyan.datacollection.adapter.event.controller.request.TrackingEventCreateRequest;
 import com.cyan.datacollection.adapter.event.controller.request.TrackingEventPageQuery;
 import com.cyan.datacollection.adapter.event.controller.request.TrackingEventUpdateRequest;
 import com.cyan.employee.login.filter.UserContextHolder;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 事件定义控制器
@@ -28,9 +34,12 @@ import org.springframework.web.bind.annotation.*;
 public class TrackingEventController implements TrackingEventClient {
 
     private final TrackingEventService trackingEventService;
+    private final TrackingEventPropertyService trackingEventPropertyService;
 
-    public TrackingEventController(TrackingEventService trackingEventService) {
+    public TrackingEventController(TrackingEventService trackingEventService,
+                                   TrackingEventPropertyService trackingEventPropertyService) {
         this.trackingEventService = trackingEventService;
+        this.trackingEventPropertyService = trackingEventPropertyService;
     }
 
     @Override
@@ -87,5 +96,25 @@ public class TrackingEventController implements TrackingEventClient {
     public Response<TrackingEventUsageDTO> usage(@PathVariable("id") String id) {
         TrackingEventBO.UsageBO usage = trackingEventService.usage(id);
         return Response.success(TrackingEventAdapterConvert.INSTANCE.toClientUsageDTO(usage));
+    }
+
+    @Override
+    @PutMapping("/{id}/properties")
+    public Response<Void> configProperties(@PathVariable("id") String id,
+                                           @RequestBody @Valid List<EventPropertyConfigRequest> requests) {
+        List<EventPropertyConfigCmd> cmds = requests.stream()
+                .map(TrackingEventAdapterConvert.INSTANCE::toCmd)
+                .toList();
+        trackingEventPropertyService.configProperties(id, cmds);
+        return Response.success(null);
+    }
+
+    @Override
+    @GetMapping("/{id}/properties")
+    public Response<List<EventPropertyDTO>> listProperties(@PathVariable("id") String id) {
+        List<EventPropertyBO> bos = trackingEventPropertyService.listProperties(id);
+        return Response.success(bos.stream()
+                .map(TrackingEventAdapterConvert.INSTANCE::toEventPropertyDTO)
+                .toList());
     }
 }

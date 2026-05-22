@@ -64,6 +64,17 @@ public class TrackingEventSampleRepositoryImpl implements TrackingEventSampleRep
     }
 
     @Override
+    public List<TrackingEventSample> findByDebugToken(String debugToken) {
+        LambdaQueryWrapper<TrackingEventSampleDO> wrapper = new LambdaQueryWrapper<TrackingEventSampleDO>()
+                .eq(TrackingEventSampleDO::getDebugToken, debugToken)
+                .orderByDesc(TrackingEventSampleDO::getCreatedAt);
+        List<TrackingEventSampleDO> dos = trackingEventSampleMapper.selectList(wrapper);
+        return Optional.ofNullable(dos).orElse(List.of()).stream()
+                .map(TrackingEventSampleInfraConvert.INSTANCE::toTrackingEventSample)
+                .toList();
+    }
+
+    @Override
     public List<TrackingEventSample> saveBatch(List<TrackingEventSample> samples) {
         for (TrackingEventSample sample : samples) {
             TrackingEventSampleDO trackingEventSampleDO = TrackingEventSampleInfraConvert.INSTANCE.toTrackingEventSampleDO(sample);

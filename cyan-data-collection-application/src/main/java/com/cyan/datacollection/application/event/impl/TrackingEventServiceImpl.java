@@ -7,6 +7,8 @@ import com.cyan.datacollection.application.event.TrackingEventService;
 import com.cyan.datacollection.application.event.bo.TrackingEventBO;
 import com.cyan.datacollection.application.event.cmd.TrackingEventCmd;
 import com.cyan.datacollection.application.event.convert.TrackingEventAppConvert;
+import com.cyan.datacollection.application.eventproperty.TrackingEventPropertyService;
+import com.cyan.datacollection.application.eventproperty.bo.EventPropertyBO;
 import com.cyan.datacollection.domain.event.TrackingEvent;
 import com.cyan.datacollection.domain.event.query.TrackingEventPageQuery;
 import com.cyan.datacollection.domain.event.repository.TrackingEventRepository;
@@ -28,9 +30,12 @@ import java.util.List;
 public class TrackingEventServiceImpl implements TrackingEventService {
 
     private final TrackingEventRepository trackingEventRepository;
+    private final TrackingEventPropertyService trackingEventPropertyService;
 
-    public TrackingEventServiceImpl(TrackingEventRepository trackingEventRepository) {
+    public TrackingEventServiceImpl(TrackingEventRepository trackingEventRepository,
+                                    TrackingEventPropertyService trackingEventPropertyService) {
         this.trackingEventRepository = trackingEventRepository;
+        this.trackingEventPropertyService = trackingEventPropertyService;
     }
 
     @Override
@@ -74,7 +79,11 @@ public class TrackingEventServiceImpl implements TrackingEventService {
     public TrackingEventBO detail(String id) {
         TrackingEvent event = trackingEventRepository.findById(id);
         Assert.notNull(event, new SilentException("事件不存在"));
-        return TrackingEventAppConvert.INSTANCE.toTrackingEventBO(event);
+        TrackingEventBO bo = TrackingEventAppConvert.INSTANCE.toTrackingEventBO(event);
+        // 查询事件属性列表
+        List<EventPropertyBO> properties = trackingEventPropertyService.listProperties(id);
+        bo.setProperties(properties);
+        return bo;
     }
 
     @Override

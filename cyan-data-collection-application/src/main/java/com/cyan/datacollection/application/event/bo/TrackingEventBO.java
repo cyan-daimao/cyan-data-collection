@@ -1,5 +1,6 @@
 package com.cyan.datacollection.application.event.bo;
 
+import com.cyan.datacollection.application.eventproperty.bo.EventPropertyBO;
 import com.cyan.datacollection.enums.EventStatus;
 import com.cyan.datacollection.enums.EventType;
 import lombok.AllArgsConstructor;
@@ -53,6 +54,11 @@ public class TrackingEventBO {
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
+
+    /**
+     * 事件属性列表
+     */
+    private List<EventPropertyBO> properties;
 
     @Data
     @NoArgsConstructor

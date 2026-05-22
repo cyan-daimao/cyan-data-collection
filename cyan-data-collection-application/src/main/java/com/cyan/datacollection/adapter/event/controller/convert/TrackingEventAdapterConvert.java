@@ -3,8 +3,12 @@ package com.cyan.datacollection.adapter.event.controller.convert;
 import com.cyan.arch.base.mapstruct.MapstructConvert;
 import com.cyan.datacollection.application.event.bo.TrackingEventBO;
 import com.cyan.datacollection.application.event.cmd.TrackingEventCmd;
+import com.cyan.datacollection.application.eventproperty.bo.EventPropertyBO;
+import com.cyan.datacollection.application.eventproperty.cmd.EventPropertyConfigCmd;
+import com.cyan.datacollection.adapter.event.controller.dto.EventPropertyDTO;
 import com.cyan.datacollection.adapter.event.controller.dto.TrackingEventDTO;
 import com.cyan.datacollection.adapter.event.controller.dto.TrackingEventUsageDTO;
+import com.cyan.datacollection.adapter.event.controller.request.EventPropertyConfigRequest;
 import com.cyan.datacollection.adapter.event.controller.request.TrackingEventCreateRequest;
 import com.cyan.datacollection.adapter.event.controller.request.TrackingEventUpdateRequest;
 import com.cyan.datacollection.domain.event.query.TrackingEventPageQuery;
@@ -33,6 +37,10 @@ public interface TrackingEventAdapterConvert {
     TrackingEventCmd toCmd(TrackingEventUpdateRequest request);
 
     TrackingEventPageQuery toPageQuery(com.cyan.datacollection.adapter.event.controller.request.TrackingEventPageQuery query);
+
+    EventPropertyConfigCmd toCmd(EventPropertyConfigRequest request);
+
+    EventPropertyDTO toEventPropertyDTO(EventPropertyBO bo);
 
     default TrackingEventUsageDTO toClientUsageDTO(TrackingEventBO.UsageBO usage) {
         if (usage == null) {

@@ -205,3 +205,117 @@ CREATE TABLE IF NOT EXISTS tracking_debug_session (
     INDEX idx_status (status),
     INDEX idx_app_code (app_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Debug会话表';
+
+-- 埋点验收任务表
+CREATE TABLE IF NOT EXISTS tracking_acceptance_task (
+    id BIGINT NOT NULL PRIMARY KEY,
+    task_code VARCHAR(128) NOT NULL COMMENT '验收任务编号',
+    plan_id BIGINT NOT NULL COMMENT '方案ID',
+    debug_token VARCHAR(128) NOT NULL COMMENT 'Debug Token',
+    environment VARCHAR(64) COMMENT '环境',
+    status VARCHAR(64) NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING, RUNNING, PASS, FAIL',
+    event_coverage_rate DECIMAL(10,4) COMMENT '事件覆盖率',
+    required_property_complete_rate DECIMAL(10,4) COMMENT '必填属性完整率',
+    type_valid_rate DECIMAL(10,4) COMMENT '类型正确率',
+    result_summary TEXT COMMENT '结果摘要JSON',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME DEFAULT NULL,
+    created_by VARCHAR(128),
+    updated_by VARCHAR(128),
+    UNIQUE KEY uk_task_code (task_code),
+    INDEX idx_plan_id (plan_id),
+    INDEX idx_debug_token (debug_token),
+    INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='埋点验收任务表';
+
+-- 埋点验收结果表
+CREATE TABLE IF NOT EXISTS tracking_acceptance_result (
+    id BIGINT NOT NULL PRIMARY KEY,
+    task_id BIGINT NOT NULL COMMENT '验收任务ID',
+    event_id BIGINT COMMENT '事件ID',
+    event_code VARCHAR(128) COMMENT '事件编码',
+    status VARCHAR(64) NOT NULL COMMENT 'PASS, FAIL',
+    error_items TEXT COMMENT '错误项JSON',
+    sample_ids TEXT COMMENT '命中的样本ID JSON',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME DEFAULT NULL,
+    INDEX idx_task_id (task_id),
+    INDEX idx_event_code (event_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='埋点验收结果表';
+
+-- 埋点发布版本表
+CREATE TABLE IF NOT EXISTS tracking_release (
+    id BIGINT NOT NULL PRIMARY KEY,
+    release_code VARCHAR(128) NOT NULL COMMENT '发布编号',
+    plan_id BIGINT NOT NULL COMMENT '方案ID',
+    version INT NOT NULL COMMENT '发布版本',
+    status VARCHAR(64) NOT NULL DEFAULT 'DRAFT' COMMENT 'DRAFT, SUBMITTED, PUBLISHED, CANCELED',
+    diff_summary TEXT COMMENT '变更摘要JSON',
+    published_at DATETIME COMMENT '发布时间',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME DEFAULT NULL,
+    created_by VARCHAR(128),
+    updated_by VARCHAR(128),
+    UNIQUE KEY uk_release_code (release_code),
+    INDEX idx_plan_id (plan_id),
+    INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='埋点发布版本表';
+
+-- 埋点发布版本明细表
+CREATE TABLE IF NOT EXISTS tracking_release_item (
+    id BIGINT NOT NULL PRIMARY KEY,
+    release_id BIGINT NOT NULL COMMENT '发布ID',
+    item_type VARCHAR(64) NOT NULL COMMENT 'EVENT, PROPERTY, PLAN',
+    item_id BIGINT NOT NULL COMMENT '对象ID',
+    item_code VARCHAR(128) COMMENT '对象编码',
+    change_type VARCHAR(64) COMMENT 'ADD, UPDATE, DELETE',
+    snapshot TEXT COMMENT '发布快照JSON',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME DEFAULT NULL,
+    INDEX idx_release_id (release_id),
+    INDEX idx_item_type (item_type),
+    INDEX idx_item_code (item_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='埋点发布版本明细表';
+
+-- 埋点质量指标表
+CREATE TABLE IF NOT EXISTS tracking_quality_metric (
+    id BIGINT NOT NULL PRIMARY KEY,
+    app_code VARCHAR(128) COMMENT '应用编码',
+    event_code VARCHAR(128) COMMENT '事件编码',
+    environment VARCHAR(64) COMMENT '环境',
+    metric_time DATETIME NOT NULL COMMENT '统计时间',
+    metric_granularity VARCHAR(64) NOT NULL COMMENT 'MINUTE, HOUR, DAY',
+    total_count BIGINT DEFAULT 0 COMMENT '总上报量',
+    pass_count BIGINT DEFAULT 0 COMMENT '通过量',
+    warn_count BIGINT DEFAULT 0 COMMENT '警告量',
+    fail_count BIGINT DEFAULT 0 COMMENT '失败量',
+    pass_rate DECIMAL(10,4) COMMENT '通过率',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME DEFAULT NULL,
+    INDEX idx_event_time (event_code, metric_time),
+    INDEX idx_app_time (app_code, metric_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='埋点质量指标表';
+
+-- 埋点质量告警表
+CREATE TABLE IF NOT EXISTS tracking_alert (
+    id BIGINT NOT NULL PRIMARY KEY,
+    alert_type VARCHAR(64) NOT NULL COMMENT 'NO_DATA, FAIL_RATE_HIGH, PROPERTY_MISSING',
+    app_code VARCHAR(128) COMMENT '应用编码',
+    event_code VARCHAR(128) COMMENT '事件编码',
+    alert_level VARCHAR(64) COMMENT 'INFO, WARN, ERROR',
+    alert_message TEXT COMMENT '告警信息',
+    status VARCHAR(64) NOT NULL DEFAULT 'OPEN' COMMENT 'OPEN, CLOSED',
+    triggered_at DATETIME COMMENT '触发时间',
+    closed_at DATETIME COMMENT '关闭时间',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME DEFAULT NULL,
+    INDEX idx_status (status),
+    INDEX idx_event_code (event_code),
+    INDEX idx_triggered_at (triggered_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='埋点质量告警表';

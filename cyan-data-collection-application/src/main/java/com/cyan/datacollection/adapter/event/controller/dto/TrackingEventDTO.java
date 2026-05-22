@@ -104,4 +104,9 @@ public class TrackingEventDTO {
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime updatedAt;
+
+    /**
+     * 事件属性列表
+     */
+    private List<EventPropertyDTO> properties;
 }

@@ -3,6 +3,8 @@ package com.cyan.datacollection.infra.persistence.plan.repository;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cyan.arch.common.api.Pageable;
+import com.cyan.arch.common.util.Convert;
+import com.cyan.arch.common.util.StrUtils;
 import com.cyan.datacollection.domain.plan.TrackingPlan;
 import com.cyan.datacollection.domain.plan.query.TrackingPlanPageQuery;
 import com.cyan.datacollection.domain.plan.repository.TrackingPlanRepository;
@@ -43,7 +45,7 @@ public class TrackingPlanRepositoryImpl implements TrackingPlanRepository {
         LambdaQueryWrapper<TrackingPlanDO> wrapper = new LambdaQueryWrapper<TrackingPlanDO>()
                 .like(StringUtils.isNotBlank(query.getPlanCode()), TrackingPlanDO::getPlanCode, query.getPlanCode())
                 .like(StringUtils.isNotBlank(query.getPlanName()), TrackingPlanDO::getPlanName, query.getPlanName())
-                .eq(query.getDemandId() != null, TrackingPlanDO::getDemandId, query.getDemandId() != null ? Long.parseLong(query.getDemandId()) : null)
+                .eq(StrUtils.isNotBlank(query.getDemandId()), TrackingPlanDO::getDemandId, query.getDemandId() != null ? Convert.toLong(query.getDemandId()) : null)
                 .eq(StringUtils.isNotBlank(query.getStatus()), TrackingPlanDO::getStatus, PlanStatus.of(query.getStatus()))
                 .orderByDesc(TrackingPlanDO::getUpdatedAt);
         Page<TrackingPlanDO> result = trackingPlanMapper.selectPage(page, wrapper);

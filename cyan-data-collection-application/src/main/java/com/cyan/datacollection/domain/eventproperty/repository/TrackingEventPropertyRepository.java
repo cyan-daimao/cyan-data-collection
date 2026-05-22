@@ -1,5 +1,6 @@
 package com.cyan.datacollection.domain.eventproperty.repository;
 
+import com.cyan.datacollection.domain.eventproperty.EventPropertyRule;
 import com.cyan.datacollection.domain.eventproperty.TrackingEventProperty;
 
 import java.util.List;
@@ -51,4 +52,9 @@ public interface TrackingEventPropertyRepository {
      * 根据属性ID删除
      */
     void deleteByPropertyId(String propertyId);
+
+    /**
+     * 查询事件属性规则（关联属性定义）
+     */
+    List<EventPropertyRule> findPropertyRulesByEventId(String eventId);
 }
