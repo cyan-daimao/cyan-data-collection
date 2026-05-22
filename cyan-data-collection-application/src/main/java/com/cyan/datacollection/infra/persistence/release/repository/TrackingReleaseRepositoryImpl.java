@@ -2,7 +2,7 @@ package com.cyan.datacollection.infra.persistence.release.repository;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.cyan.arch.common.api.Pageable;
+import com.cyan.arch.common.util.Convert;
 import com.cyan.arch.common.util.StrUtils;
 import com.cyan.datacollection.domain.release.TrackingRelease;
 import com.cyan.datacollection.domain.release.query.TrackingReleasePageQuery;
@@ -42,7 +42,7 @@ public class TrackingReleaseRepositoryImpl implements TrackingReleaseRepository 
     public com.cyan.arch.common.api.Page<TrackingRelease> page(TrackingReleasePageQuery query) {
         Page<TrackingReleaseDO> page = new Page<>(query.current(), query.size());
         LambdaQueryWrapper<TrackingReleaseDO> wrapper = new LambdaQueryWrapper<TrackingReleaseDO>()
-                .eq(StrUtils.isNotBlank(query.getPlanId()), TrackingReleaseDO::getPlanId, query.getPlanId() != null ? Long.parseLong(query.getPlanId()) : null)
+                .eq(StrUtils.isNotBlank(query.getPlanId()), TrackingReleaseDO::getPlanId,  Convert.toLong(query.getPlanId()) )
                 .like(StringUtils.isNotBlank(query.getReleaseCode()), TrackingReleaseDO::getReleaseCode, query.getReleaseCode())
                 .eq(StringUtils.isNotBlank(query.getStatus()), TrackingReleaseDO::getStatus, ReleaseStatus.of(query.getStatus()))
                 .orderByDesc(TrackingReleaseDO::getCreatedAt);
