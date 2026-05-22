@@ -1,5 +1,6 @@
 package com.cyan.datacollection.adapter.release.controller.request;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Data;
 
 /**
@@ -14,11 +15,13 @@ public class TrackingReleasePageQuery {
     /**
      * 页码
      */
+    @JsonAlias({"pageNo", "current"})
     private long pageNum = 1;
 
     /**
      * 页大小
      */
+    @JsonAlias("size")
     private long pageSize = 20;
 
     /**

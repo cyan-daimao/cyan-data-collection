@@ -1,6 +1,7 @@
 package com.cyan.datacollection.adapter.qualityrule.controller.request;
 
 import com.cyan.arch.common.api.Pageable;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Data;
 
 /**
@@ -12,7 +13,9 @@ import lombok.Data;
 @Data
 public class TrackingQualityRulePageRequest implements Pageable {
 
+    @JsonAlias({"pageNo", "current"})
     private long pageNum = 1;
+    @JsonAlias("size")
     private long pageSize = 20;
     private String ruleCode;
     private String ruleName;

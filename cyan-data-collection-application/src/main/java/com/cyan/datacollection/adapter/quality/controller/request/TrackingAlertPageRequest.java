@@ -1,5 +1,6 @@
 package com.cyan.datacollection.adapter.quality.controller.request;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -45,10 +46,12 @@ public class TrackingAlertPageRequest {
     /**
      * 页码
      */
+    @JsonAlias({"pageNum", "pageNo"})
     private long current = 1;
 
     /**
      * 每页大小
      */
+    @JsonAlias("pageSize")
     private long size = 10;
 }

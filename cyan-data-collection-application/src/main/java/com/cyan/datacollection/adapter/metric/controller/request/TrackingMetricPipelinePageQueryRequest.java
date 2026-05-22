@@ -1,5 +1,6 @@
 package com.cyan.datacollection.adapter.metric.controller.request;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Data;
 
 /**
@@ -11,7 +12,9 @@ import lombok.Data;
 @Data
 public class TrackingMetricPipelinePageQueryRequest {
 
+    @JsonAlias({"pageNo", "current"})
     private long pageNum = 1;
+    @JsonAlias("size")
     private long pageSize = 20;
     private String metricCode;
     private String metricName;
