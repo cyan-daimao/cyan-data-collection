@@ -5,6 +5,7 @@ import com.cyan.datacollection.adapter.acceptance.controller.dto.TrackingAccepta
 import com.cyan.datacollection.adapter.acceptance.controller.request.TrackingAcceptanceTaskCreateRequest;
 import com.cyan.datacollection.adapter.acceptance.controller.request.TrackingAcceptanceTaskPageQuery;
 import com.cyan.datacollection.adapter.common.PageResultDTO;
+import jakarta.validation.Valid;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,7 +31,7 @@ public interface TrackingAcceptanceClient {
      * 创建验收任务
      */
     @PostMapping
-    Response<TrackingAcceptanceTaskDTO> create(@RequestBody TrackingAcceptanceTaskCreateRequest request);
+    Response<TrackingAcceptanceTaskDTO> create(@RequestBody @Valid TrackingAcceptanceTaskCreateRequest request);
 
     /**
      * 验收任务详情

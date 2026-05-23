@@ -7,6 +7,7 @@ import com.cyan.datacollection.adapter.app.controller.dto.TrackingAppIntegration
 import com.cyan.datacollection.adapter.app.controller.request.TrackingAppCreateRequest;
 import com.cyan.datacollection.adapter.app.controller.request.TrackingAppPageQuery;
 import com.cyan.datacollection.adapter.app.controller.request.TrackingAppUpdateRequest;
+import jakarta.validation.Valid;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,13 +34,13 @@ public interface TrackingAppClient {
      * 创建应用
      */
     @PostMapping
-    Response<TrackingAppDTO> create(@RequestBody TrackingAppCreateRequest request);
+    Response<TrackingAppDTO> create(@RequestBody @Valid TrackingAppCreateRequest request);
 
     /**
      * 更新应用
      */
     @PutMapping("/{id}")
-    Response<TrackingAppDTO> update(@PathVariable("id") String id, @RequestBody TrackingAppUpdateRequest request);
+    Response<TrackingAppDTO> update(@PathVariable("id") String id, @RequestBody @Valid TrackingAppUpdateRequest request);
 
     /**
      * 应用详情

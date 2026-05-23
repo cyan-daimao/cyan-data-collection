@@ -180,6 +180,13 @@ public class TrackingProperty {
         return repository.update(this);
     }
 
+    /**
+     * 校验属性可绑定事件
+     */
+    public void validateBindableToEvent() {
+        Assert.isTrue(this.status == PropertyStatus.PUBLISHED, new SilentException("只有已发布属性可绑定事件"));
+    }
+
     public void delete(TrackingPropertyRepository repository) {
         Assert.notBlank(this.id, new SilentException("属性ID不能为空"));
         repository.deleteById(this.id);

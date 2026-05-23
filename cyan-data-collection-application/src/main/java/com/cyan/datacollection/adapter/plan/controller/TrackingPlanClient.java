@@ -8,6 +8,7 @@ import com.cyan.datacollection.adapter.plan.controller.request.TrackingPlanCreat
 import com.cyan.datacollection.adapter.plan.controller.request.TrackingPlanEventConfigRequest;
 import com.cyan.datacollection.adapter.plan.controller.request.TrackingPlanPageQuery;
 import com.cyan.datacollection.adapter.plan.controller.request.TrackingPlanUpdateRequest;
+import jakarta.validation.Valid;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,13 +38,13 @@ public interface TrackingPlanClient {
      * 创建方案
      */
     @PostMapping
-    Response<TrackingPlanDTO> create(@RequestBody TrackingPlanCreateRequest request);
+    Response<TrackingPlanDTO> create(@RequestBody @Valid TrackingPlanCreateRequest request);
 
     /**
      * 更新方案
      */
     @PutMapping("/{id}")
-    Response<TrackingPlanDTO> update(@PathVariable("id") String id, @RequestBody TrackingPlanUpdateRequest request);
+    Response<TrackingPlanDTO> update(@PathVariable("id") String id, @RequestBody @Valid TrackingPlanUpdateRequest request);
 
     /**
      * 方案详情

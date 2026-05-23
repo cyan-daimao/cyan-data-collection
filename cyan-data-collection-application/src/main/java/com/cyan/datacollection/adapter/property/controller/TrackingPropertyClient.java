@@ -9,6 +9,7 @@ import com.cyan.datacollection.adapter.property.controller.dto.TrackingPropertyU
 import com.cyan.datacollection.adapter.property.controller.request.TrackingPropertyCreateRequest;
 import com.cyan.datacollection.adapter.property.controller.request.TrackingPropertyPageQuery;
 import com.cyan.datacollection.adapter.property.controller.request.TrackingPropertyUpdateRequest;
+import jakarta.validation.Valid;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,13 +36,13 @@ public interface TrackingPropertyClient {
      * 创建属性
      */
     @PostMapping
-    Response<TrackingPropertyDTO> create(@RequestBody TrackingPropertyCreateRequest request);
+    Response<TrackingPropertyDTO> create(@RequestBody @Valid TrackingPropertyCreateRequest request);
 
     /**
      * 更新属性
      */
     @PutMapping("/{id}")
-    Response<TrackingPropertyDTO> update(@PathVariable("id") String id, @RequestBody TrackingPropertyUpdateRequest request);
+    Response<TrackingPropertyDTO> update(@PathVariable("id") String id, @RequestBody @Valid TrackingPropertyUpdateRequest request);
 
     /**
      * 属性详情

@@ -11,6 +11,7 @@ import com.cyan.datacollection.adapter.event.controller.request.EventPropertyCon
 import com.cyan.datacollection.adapter.event.controller.request.TrackingEventCreateRequest;
 import com.cyan.datacollection.adapter.event.controller.request.TrackingEventPageQuery;
 import com.cyan.datacollection.adapter.event.controller.request.TrackingEventUpdateRequest;
+import jakarta.validation.Valid;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,13 +40,13 @@ public interface TrackingEventClient {
      * 创建事件
      */
     @PostMapping
-    Response<TrackingEventDTO> create(@RequestBody TrackingEventCreateRequest request);
+    Response<TrackingEventDTO> create(@RequestBody @Valid TrackingEventCreateRequest request);
 
     /**
      * 更新事件
      */
     @PutMapping("/{id}")
-    Response<TrackingEventDTO> update(@PathVariable("id") String id, @RequestBody TrackingEventUpdateRequest request);
+    Response<TrackingEventDTO> update(@PathVariable("id") String id, @RequestBody @Valid TrackingEventUpdateRequest request);
 
     /**
      * 事件详情
@@ -75,7 +76,7 @@ public interface TrackingEventClient {
      * 配置事件属性
      */
     @PutMapping("/{id}/properties")
-    Response<Void> configProperties(@PathVariable("id") String id, @RequestBody List<EventPropertyConfigRequest> requests);
+    Response<Void> configProperties(@PathVariable("id") String id, @RequestBody @Valid List<EventPropertyConfigRequest> requests);
 
     /**
      * 查询事件属性列表

@@ -6,6 +6,7 @@ import com.cyan.datacollection.adapter.debug.controller.dto.DebugEventSampleDTO;
 import com.cyan.datacollection.adapter.debug.controller.dto.DebugSessionDTO;
 import com.cyan.datacollection.adapter.debug.controller.request.DebugEventPageQuery;
 import com.cyan.datacollection.adapter.debug.controller.request.DebugSessionCreateRequest;
+import jakarta.validation.Valid;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,7 +26,7 @@ public interface TrackingDebugClient {
      * 创建 Debug 会话
      */
     @PostMapping("/sessions")
-    Response<DebugSessionDTO> createSession(@RequestBody DebugSessionCreateRequest request);
+    Response<DebugSessionDTO> createSession(@RequestBody @Valid DebugSessionCreateRequest request);
 
     /**
      * 会话详情

@@ -6,6 +6,7 @@ import com.cyan.datacollection.adapter.demand.controller.dto.TrackingDemandDTO;
 import com.cyan.datacollection.adapter.demand.controller.request.TrackingDemandCreateRequest;
 import com.cyan.datacollection.adapter.demand.controller.request.TrackingDemandPageQuery;
 import com.cyan.datacollection.adapter.demand.controller.request.TrackingDemandUpdateRequest;
+import jakarta.validation.Valid;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,13 +33,13 @@ public interface TrackingDemandClient {
      * 创建需求
      */
     @PostMapping
-    Response<TrackingDemandDTO> create(@RequestBody TrackingDemandCreateRequest request);
+    Response<TrackingDemandDTO> create(@RequestBody @Valid TrackingDemandCreateRequest request);
 
     /**
      * 更新需求
      */
     @PutMapping("/{id}")
-    Response<TrackingDemandDTO> update(@PathVariable("id") String id, @RequestBody TrackingDemandUpdateRequest request);
+    Response<TrackingDemandDTO> update(@PathVariable("id") String id, @RequestBody @Valid TrackingDemandUpdateRequest request);
 
     /**
      * 需求详情

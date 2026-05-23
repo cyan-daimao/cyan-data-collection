@@ -54,6 +54,7 @@ public class TrackingEventPropertyServiceImpl implements TrackingEventPropertySe
         if (properties.size() != propertyIds.size()) {
             throw new SilentException("存在无效的属性ID");
         }
+        properties.forEach(TrackingProperty::validateBindableToEvent);
 
         // 删除旧关系，全量替换
         trackingEventPropertyRepository.deleteByEventId(eventId);

@@ -6,6 +6,7 @@ import com.cyan.datacollection.adapter.release.controller.dto.TrackingReleaseDTO
 import com.cyan.datacollection.adapter.release.controller.dto.TrackingReleaseItemDTO;
 import com.cyan.datacollection.adapter.release.controller.request.TrackingReleaseCreateRequest;
 import com.cyan.datacollection.adapter.release.controller.request.TrackingReleasePageQuery;
+import jakarta.validation.Valid;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,7 +34,7 @@ public interface TrackingReleaseClient {
      * 创建发布版本
      */
     @PostMapping
-    Response<TrackingReleaseDTO> create(@RequestBody TrackingReleaseCreateRequest request);
+    Response<TrackingReleaseDTO> create(@RequestBody @Valid TrackingReleaseCreateRequest request);
 
     /**
      * 发布详情
