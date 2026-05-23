@@ -36,7 +36,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/data-collection/events")
-public class TrackingEventController implements TrackingEventClient {
+public class TrackingEventController  {
 
     private final TrackingEventService trackingEventService;
     private final TrackingEventPropertyService trackingEventPropertyService;
@@ -50,7 +50,7 @@ public class TrackingEventController implements TrackingEventClient {
         this.trackingMetricMappingService = trackingMetricMappingService;
     }
 
-    @Override
+    
     @PostMapping("/page")
     public Response<PageResultDTO<TrackingEventDTO>> page(@RequestBody TrackingEventPageQuery query) {
         var page = trackingEventService.page(TrackingEventAdapterConvert.INSTANCE.toPageQuery(query));
@@ -59,7 +59,7 @@ public class TrackingEventController implements TrackingEventClient {
                 page.getTotal(), page.getCurrent(), page.getSize()));
     }
 
-    @Override
+    
     @PostMapping
     public Response<TrackingEventDTO> create(@RequestBody @Valid TrackingEventCreateRequest request) {
         TrackingEventCmd cmd = TrackingEventAdapterConvert.INSTANCE.toCmd(request);
@@ -69,7 +69,7 @@ public class TrackingEventController implements TrackingEventClient {
         return Response.success(TrackingEventAdapterConvert.INSTANCE.toClientDTO(bo));
     }
 
-    @Override
+    
     @PutMapping("/{id}")
     public Response<TrackingEventDTO> update(@PathVariable("id") String id, @RequestBody @Valid TrackingEventUpdateRequest request) {
         TrackingEventCmd cmd = TrackingEventAdapterConvert.INSTANCE.toCmd(request);
@@ -78,35 +78,35 @@ public class TrackingEventController implements TrackingEventClient {
         return Response.success(TrackingEventAdapterConvert.INSTANCE.toClientDTO(bo));
     }
 
-    @Override
+    
     @GetMapping("/{id}")
     public Response<TrackingEventDTO> detail(@PathVariable("id") String id) {
         TrackingEventBO bo = trackingEventService.detail(id);
         return Response.success(TrackingEventAdapterConvert.INSTANCE.toClientDTO(bo));
     }
 
-    @Override
+    
     @PostMapping("/{id}/publish")
     public Response<TrackingEventDTO> publish(@PathVariable("id") String id) {
         TrackingEventBO bo = trackingEventService.publish(id);
         return Response.success(TrackingEventAdapterConvert.INSTANCE.toClientDTO(bo));
     }
 
-    @Override
+    
     @PostMapping("/{id}/deprecate")
     public Response<TrackingEventDTO> deprecate(@PathVariable("id") String id) {
         TrackingEventBO bo = trackingEventService.deprecate(id);
         return Response.success(TrackingEventAdapterConvert.INSTANCE.toClientDTO(bo));
     }
 
-    @Override
+    
     @GetMapping("/{id}/usage")
     public Response<TrackingEventUsageDTO> usage(@PathVariable("id") String id) {
         TrackingEventBO.UsageBO usage = trackingEventService.usage(id);
         return Response.success(TrackingEventAdapterConvert.INSTANCE.toClientUsageDTO(usage));
     }
 
-    @Override
+    
     @PutMapping("/{id}/properties")
     public Response<Void> configProperties(@PathVariable("id") String id,
                                            @RequestBody @Valid List<EventPropertyConfigRequest> requests) {
@@ -117,7 +117,7 @@ public class TrackingEventController implements TrackingEventClient {
         return Response.success(null);
     }
 
-    @Override
+    
     @GetMapping("/{id}/properties")
     public Response<List<EventPropertyDTO>> listProperties(@PathVariable("id") String id) {
         List<EventPropertyBO> bos = trackingEventPropertyService.listProperties(id);
@@ -126,7 +126,7 @@ public class TrackingEventController implements TrackingEventClient {
                 .toList());
     }
 
-    @Override
+    
     @PostMapping("/{id}/sync-metric")
     public Response<EventMetricMappingDTO> syncMetric(@PathVariable("id") String id,
                                                       @RequestBody EventMetricSyncRequest request) {
@@ -136,7 +136,7 @@ public class TrackingEventController implements TrackingEventClient {
         return Response.success(TrackingMappingAdapterConvert.INSTANCE.toDTO(bo));
     }
 
-    @Override
+    
     @GetMapping("/{id}/metric-mapping")
     public Response<EventMetricMappingDTO> metricMapping(@PathVariable("id") String id) {
         EventMetricMappingBO bo = trackingMetricMappingService.getEventMetricMapping(id);

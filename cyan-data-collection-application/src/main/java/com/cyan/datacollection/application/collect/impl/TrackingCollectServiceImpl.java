@@ -1,8 +1,6 @@
 package com.cyan.datacollection.application.collect.impl;
 
 import com.alibaba.fastjson2.JSON;
-import com.cyan.arch.common.api.Assert;
-import com.cyan.arch.common.api.SilentException;
 import com.cyan.datacollection.application.collect.TrackingCollectService;
 import com.cyan.datacollection.application.collect.TrackingEventValidateService;
 import com.cyan.datacollection.application.collect.bo.CollectResultBO;
@@ -29,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -150,7 +149,7 @@ public class TrackingCollectServiceImpl implements TrackingCollectService {
                 .setDebugToken(cmd.getDebugToken())
                 .setEventCode(cmd.getEventCode())
                 .setEventTime(cmd.getEventTime())
-                .setIngestionTime(LocalDateTime.now())
+                .setIngestionTime(LocalDateTime.now(ZoneId.of("Asia/Shanghai")))
                 .setTerminalType(cmd.getTerminalType() != null ? TerminalType.of(cmd.getTerminalType()) : null)
                 .setEnvironment(cmd.getEnvironment() != null ? Environment.of(cmd.getEnvironment()) : null)
                 .setUserId(cmd.getUserId())
