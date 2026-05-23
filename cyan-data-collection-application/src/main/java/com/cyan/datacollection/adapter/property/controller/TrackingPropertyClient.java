@@ -2,6 +2,8 @@ package com.cyan.datacollection.adapter.property.controller;
 
 import com.cyan.arch.common.api.Response;
 import com.cyan.datacollection.adapter.common.PageResultDTO;
+import com.cyan.datacollection.adapter.mapping.controller.dto.PropertyDimensionMappingDTO;
+import com.cyan.datacollection.adapter.mapping.controller.request.PropertyDimensionSyncRequest;
 import com.cyan.datacollection.adapter.property.controller.dto.TrackingPropertyDTO;
 import com.cyan.datacollection.adapter.property.controller.dto.TrackingPropertyUsageDTO;
 import com.cyan.datacollection.adapter.property.controller.request.TrackingPropertyCreateRequest;
@@ -64,4 +66,16 @@ public interface TrackingPropertyClient {
      */
     @GetMapping("/{id}/usage")
     Response<TrackingPropertyUsageDTO> usage(@PathVariable("id") String id);
+
+    /**
+     * 属性同步为维度
+     */
+    @PostMapping("/{id}/sync-dimension")
+    Response<PropertyDimensionMappingDTO> syncDimension(@PathVariable("id") String id, @RequestBody PropertyDimensionSyncRequest request);
+
+    /**
+     * 查询属性维度映射
+     */
+    @GetMapping("/{id}/dimension-mapping")
+    Response<PropertyDimensionMappingDTO> dimensionMapping(@PathVariable("id") String id);
 }

@@ -2,6 +2,8 @@ package com.cyan.datacollection.adapter.event.controller;
 
 import com.cyan.arch.common.api.Response;
 import com.cyan.datacollection.adapter.common.PageResultDTO;
+import com.cyan.datacollection.adapter.mapping.controller.dto.EventMetricMappingDTO;
+import com.cyan.datacollection.adapter.mapping.controller.request.EventMetricSyncRequest;
 import com.cyan.datacollection.adapter.event.controller.dto.EventPropertyDTO;
 import com.cyan.datacollection.adapter.event.controller.dto.TrackingEventDTO;
 import com.cyan.datacollection.adapter.event.controller.dto.TrackingEventUsageDTO;
@@ -80,4 +82,16 @@ public interface TrackingEventClient {
      */
     @GetMapping("/{id}/properties")
     Response<List<EventPropertyDTO>> listProperties(@PathVariable("id") String id);
+
+    /**
+     * 事件同步为指标
+     */
+    @PostMapping("/{id}/sync-metric")
+    Response<EventMetricMappingDTO> syncMetric(@PathVariable("id") String id, @RequestBody EventMetricSyncRequest request);
+
+    /**
+     * 查询事件指标映射
+     */
+    @GetMapping("/{id}/metric-mapping")
+    Response<EventMetricMappingDTO> metricMapping(@PathVariable("id") String id);
 }

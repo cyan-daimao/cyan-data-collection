@@ -378,6 +378,42 @@ VALUES
 (1000006, 1000001, 1000006, 0, '来源页面', 'system', 'system')
 ON DUPLICATE KEY UPDATE updated_at = CURRENT_TIMESTAMP;
 
+-- 属性维度映射表
+CREATE TABLE IF NOT EXISTS tracking_property_dimension_mapping (
+    id BIGINT NOT NULL PRIMARY KEY,
+    property_id BIGINT NOT NULL COMMENT '属性ID',
+    property_code VARCHAR(128) NOT NULL COMMENT '属性编码',
+    dim_id VARCHAR(64) COMMENT '指标平台维度ID',
+    dim_code VARCHAR(128) NOT NULL COMMENT '指标平台维度编码',
+    sync_status VARCHAR(32) NOT NULL COMMENT '同步状态: PENDING,SUCCESS,FAILED',
+    error_message VARCHAR(1024) COMMENT '错误信息',
+    created_by VARCHAR(64),
+    updated_by VARCHAR(64),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME DEFAULT NULL,
+    UNIQUE KEY uk_property_id (property_id),
+    UNIQUE KEY uk_dim_code (dim_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='采集属性维度映射表';
+
+-- 事件指标映射表
+CREATE TABLE IF NOT EXISTS tracking_event_metric_mapping (
+    id BIGINT NOT NULL PRIMARY KEY,
+    event_id BIGINT NOT NULL COMMENT '事件ID',
+    event_code VARCHAR(128) NOT NULL COMMENT '事件编码',
+    metric_id VARCHAR(64) COMMENT '指标平台指标ID',
+    metric_code VARCHAR(128) NOT NULL COMMENT '指标平台指标编码',
+    sync_status VARCHAR(32) NOT NULL COMMENT '同步状态: PENDING,SUCCESS,FAILED',
+    error_message VARCHAR(1024) COMMENT '错误信息',
+    created_by VARCHAR(64),
+    updated_by VARCHAR(64),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME DEFAULT NULL,
+    UNIQUE KEY uk_event_id (event_id),
+    UNIQUE KEY uk_metric_code (metric_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='采集事件指标映射表';
+
 
 -- 采集指标链路表
 CREATE TABLE IF NOT EXISTS tracking_metric_pipeline (

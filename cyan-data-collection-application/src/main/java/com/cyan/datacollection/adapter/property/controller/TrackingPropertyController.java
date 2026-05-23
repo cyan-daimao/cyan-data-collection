@@ -1,7 +1,12 @@
 package com.cyan.datacollection.adapter.property.controller;
 
 import com.cyan.arch.common.api.Response;
+import com.cyan.datacollection.adapter.mapping.controller.convert.TrackingMappingAdapterConvert;
+import com.cyan.datacollection.adapter.mapping.controller.dto.PropertyDimensionMappingDTO;
+import com.cyan.datacollection.adapter.mapping.controller.request.PropertyDimensionSyncRequest;
 import com.cyan.datacollection.adapter.property.controller.convert.TrackingPropertyAdapterConvert;
+import com.cyan.datacollection.application.mapping.TrackingMetricMappingService;
+import com.cyan.datacollection.application.mapping.bo.PropertyDimensionMappingBO;
 import com.cyan.datacollection.application.property.TrackingPropertyService;
 import com.cyan.datacollection.application.property.bo.TrackingPropertyBO;
 import com.cyan.datacollection.application.property.cmd.TrackingPropertyCmd;
@@ -28,9 +33,12 @@ import org.springframework.web.bind.annotation.*;
 public class TrackingPropertyController implements TrackingPropertyClient {
 
     private final TrackingPropertyService trackingPropertyService;
+    private final TrackingMetricMappingService trackingMetricMappingService;
 
-    public TrackingPropertyController(TrackingPropertyService trackingPropertyService) {
+    public TrackingPropertyController(TrackingPropertyService trackingPropertyService,
+                                      TrackingMetricMappingService trackingMetricMappingService) {
         this.trackingPropertyService = trackingPropertyService;
+        this.trackingMetricMappingService = trackingMetricMappingService;
     }
 
     @Override
@@ -87,5 +95,22 @@ public class TrackingPropertyController implements TrackingPropertyClient {
     public Response<TrackingPropertyUsageDTO> usage(@PathVariable("id") String id) {
         TrackingPropertyBO.UsageBO usage = trackingPropertyService.usage(id);
         return Response.success(TrackingPropertyAdapterConvert.INSTANCE.toClientUsageDTO(usage));
+    }
+
+    @Override
+    @PostMapping("/{id}/sync-dimension")
+    public Response<PropertyDimensionMappingDTO> syncDimension(@PathVariable("id") String id,
+                                                              @RequestBody PropertyDimensionSyncRequest request) {
+        var cmd = TrackingMappingAdapterConvert.INSTANCE.toCmd(request == null ? new PropertyDimensionSyncRequest() : request);
+        cmd.setOperator(UserContextHolder.getCurrentEmployee().getPassport());
+        PropertyDimensionMappingBO bo = trackingMetricMappingService.syncPropertyDimension(id, cmd);
+        return Response.success(TrackingMappingAdapterConvert.INSTANCE.toDTO(bo));
+    }
+
+    @Override
+    @GetMapping("/{id}/dimension-mapping")
+    public Response<PropertyDimensionMappingDTO> dimensionMapping(@PathVariable("id") String id) {
+        PropertyDimensionMappingBO bo = trackingMetricMappingService.getPropertyDimensionMapping(id);
+        return Response.success(TrackingMappingAdapterConvert.INSTANCE.toDTO(bo));
     }
 }

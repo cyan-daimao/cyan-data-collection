@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
  * @since 1.0.0
  */
 @Component
+@Deprecated(since = "1.0.0", forRemoval = false)
 public class TrackingMetricFlinkSqlGenerator {
 
     @Value("${tracking.kafka.bootstrap-servers:kafka:9092}")
