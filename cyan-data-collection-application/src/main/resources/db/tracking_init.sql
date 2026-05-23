@@ -4,6 +4,7 @@
 -- 事件定义表
 CREATE TABLE IF NOT EXISTS tracking_event (
     id BIGINT NOT NULL PRIMARY KEY,
+    app_code VARCHAR(128) NOT NULL COMMENT '应用编码',
     event_code VARCHAR(128) NOT NULL COMMENT '事件编码',
     event_name VARCHAR(255) NOT NULL COMMENT '事件名称',
     event_type VARCHAR(64) NOT NULL COMMENT '事件类型: PAGE_VIEW, CLICK, SUBMIT, SEARCH, TRANSACTION, SYSTEM, CUSTOM',
@@ -20,7 +21,8 @@ CREATE TABLE IF NOT EXISTS tracking_event (
     deleted_at DATETIME DEFAULT NULL,
     created_by VARCHAR(128),
     updated_by VARCHAR(128),
-    UNIQUE KEY uk_event_code (event_code),
+    UNIQUE KEY uk_app_event_code (app_code, event_code),
+    INDEX idx_app_code (app_code),
     INDEX idx_status (status),
     INDEX idx_business_domain (business_domain),
     INDEX idx_event_type (event_type)
@@ -351,10 +353,15 @@ CREATE TABLE IF NOT EXISTS tracking_quality_rule (
 -- 平台自身 module_click 事件和属性初始化数据
 -- ============================================
 
--- module_click 事件
-INSERT INTO tracking_event (id, event_code, event_name, event_type, business_domain, description, trigger_timing, terminal_types, owner, is_core, status, version, created_by, updated_by)
-VALUES (1000001, 'module_click', '模块点击', 'CLICK', 'platform', '平台模块点击事件，用于统计各模块的访问热度', '用户点击平台左侧菜单、顶部导航或首页模块卡片时触发', 'WEB', 'system', 1, 'PUBLISHED', 1, 'system', 'system')
-ON DUPLICATE KEY UPDATE updated_at = CURRENT_TIMESTAMP;
+-- 平台自身接入应用
+INSERT INTO tracking_app (id, app_code, app_name, app_type, description, secret_key, report_url, status, created_by, updated_by)
+VALUES (1000001, 'dataman_web', '数据平台 Web', 'WEB', 'cyan-dataman-web 前端自身埋点应用', 'system', '/rpc/data-collection/collect/events', 'ENABLED', 'system', 'system')
+ON DUPLICATE KEY UPDATE app_name = VALUES(app_name), app_type = VALUES(app_type), report_url = VALUES(report_url), status = VALUES(status), updated_at = CURRENT_TIMESTAMP;
+
+-- platform_module_click 事件
+INSERT INTO tracking_event (id, app_code, event_code, event_name, event_type, business_domain, description, trigger_timing, terminal_types, owner, is_core, status, version, created_by, updated_by)
+VALUES (1000001, 'dataman_web', 'platform_module_click', '模块点击', 'CLICK', 'platform', '平台模块点击事件，用于统计各模块的访问热度', '用户点击平台左侧菜单、顶部导航或首页模块卡片时触发', 'WEB', 'system', 1, 'PUBLISHED', 1, 'system', 'system')
+ON DUPLICATE KEY UPDATE app_code = VALUES(app_code), event_code = VALUES(event_code), business_domain = VALUES(business_domain), updated_at = CURRENT_TIMESTAMP;
 
 -- module_click 属性
 INSERT INTO tracking_property (id, property_code, property_name, property_type, data_type, description, is_required, is_sensitive, status, version, created_by, updated_by)

@@ -18,6 +18,7 @@ import com.cyan.datacollection.domain.event.TrackingEvent;
 import com.cyan.datacollection.domain.event.repository.TrackingEventRepository;
 import com.cyan.datacollection.enums.AppStatus;
 import com.cyan.datacollection.enums.Environment;
+import com.cyan.datacollection.enums.EventStatus;
 import com.cyan.datacollection.enums.TerminalType;
 import com.cyan.datacollection.enums.ValidateStatus;
 import com.cyan.datacollection.infra.kafka.TrackingEventKafkaProducer;
@@ -88,9 +89,12 @@ public class TrackingCollectServiceImpl implements TrackingCollectService {
         }
 
         // 校验 eventCode
-        TrackingEvent event = trackingEventRepository.findByCode(cmd.getEventCode());
+        TrackingEvent event = trackingEventRepository.findByAppCodeAndCode(cmd.getAppCode(), cmd.getEventCode());
         if (event == null) {
-            errors.add("[FAIL] 事件不存在: " + cmd.getEventCode());
+            errors.add("[FAIL] 事件不存在: " + cmd.getAppCode() + " / " + cmd.getEventCode());
+            baseStatus = ValidateStatus.FAIL;
+        } else if (event.getStatus() != EventStatus.PUBLISHED) {
+            errors.add("[FAIL] 事件未发布: " + cmd.getEventCode());
             baseStatus = ValidateStatus.FAIL;
         }
 

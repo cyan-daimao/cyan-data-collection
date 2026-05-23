@@ -21,6 +21,11 @@ import java.util.List;
 public class TrackingEventCreateRequest {
 
     /**
+     * 应用编码
+     */
+    private String appCode;
+
+    /**
      * 事件编码
      */
     private String eventCode;

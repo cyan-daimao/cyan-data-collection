@@ -34,6 +34,11 @@ public class TrackingEventDTO {
     private String eventCode;
 
     /**
+     * 应用编码
+     */
+    private String appCode;
+
+    /**
      * 事件名称
      */
     private String eventName;

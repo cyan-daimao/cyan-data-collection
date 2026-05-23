@@ -36,6 +36,11 @@ public class TrackingEvent {
     private String eventCode;
 
     /**
+     * 应用编码
+     */
+    private String appCode;
+
+    /**
      * 事件名称
      */
     private String eventName;
@@ -115,6 +120,7 @@ public class TrackingEvent {
      */
     private void validate() {
         Assert.notBlank(this.eventCode, new SilentException("事件编码不能为空"));
+        Assert.notBlank(this.appCode, new SilentException("应用编码不能为空"));
         Assert.notBlank(this.eventName, new SilentException("事件名称不能为空"));
         Assert.notNull(this.eventType, new SilentException("事件类型不能为空"));
         Assert.notBlank(this.businessDomain, new SilentException("业务域不能为空"));

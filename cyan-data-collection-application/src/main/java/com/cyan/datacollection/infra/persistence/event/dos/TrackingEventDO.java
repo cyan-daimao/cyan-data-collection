@@ -40,6 +40,12 @@ public class TrackingEventDO {
     private String eventCode;
 
     /**
+     * 应用编码
+     */
+    @TableField("app_code")
+    private String appCode;
+
+    /**
      * 事件名称
      */
     @TableField("event_name")

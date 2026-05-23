@@ -42,6 +42,7 @@ public class TrackingEventRepositoryImpl implements TrackingEventRepository {
     public com.cyan.arch.common.api.Page<TrackingEvent> page(TrackingEventPageQuery query) {
         Page<TrackingEventDO> page = new Page<>(query.current(), query.size());
         LambdaQueryWrapper<TrackingEventDO> wrapper = new LambdaQueryWrapper<TrackingEventDO>()
+                .eq(StringUtils.isNotBlank(query.getAppCode()), TrackingEventDO::getAppCode, query.getAppCode())
                 .like(StringUtils.isNotBlank(query.getEventCode()), TrackingEventDO::getEventCode, query.getEventCode())
                 .like(StringUtils.isNotBlank(query.getEventName()), TrackingEventDO::getEventName, query.getEventName())
                 .eq(StringUtils.isNotBlank(query.getEventType()), TrackingEventDO::getEventType, EventType.of(query.getEventType()))
@@ -59,6 +60,16 @@ public class TrackingEventRepositoryImpl implements TrackingEventRepository {
     @Override
     public TrackingEvent findByCode(String eventCode) {
         LambdaQueryWrapper<TrackingEventDO> wrapper = new LambdaQueryWrapper<TrackingEventDO>()
+                .eq(TrackingEventDO::getEventCode, eventCode)
+                .last("LIMIT 1");
+        TrackingEventDO trackingEventDO = trackingEventMapper.selectOne(wrapper);
+        return TrackingEventInfraConvert.INSTANCE.toTrackingEvent(trackingEventDO);
+    }
+
+    @Override
+    public TrackingEvent findByAppCodeAndCode(String appCode, String eventCode) {
+        LambdaQueryWrapper<TrackingEventDO> wrapper = new LambdaQueryWrapper<TrackingEventDO>()
+                .eq(TrackingEventDO::getAppCode, appCode)
                 .eq(TrackingEventDO::getEventCode, eventCode);
         TrackingEventDO trackingEventDO = trackingEventMapper.selectOne(wrapper);
         return TrackingEventInfraConvert.INSTANCE.toTrackingEvent(trackingEventDO);

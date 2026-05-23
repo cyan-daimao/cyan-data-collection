@@ -48,7 +48,7 @@ public class TrackingAppServiceImpl implements TrackingAppService {
         Assert.isNull(existing, new SilentException("应用编码已存在"));
 
         TrackingApp app = TrackingAppAppConvert.INSTANCE.toTrackingApp(cmd);
-        app.setReportUrl("/api/data-collection/collect/events");
+        app.setReportUrl("/rpc/data-collection/collect/events");
         app = app.save(trackingAppRepository);
         return TrackingAppAppConvert.INSTANCE.toTrackingAppBO(app);
     }

@@ -9,9 +9,12 @@ import com.cyan.datacollection.application.event.cmd.TrackingEventCmd;
 import com.cyan.datacollection.application.event.convert.TrackingEventAppConvert;
 import com.cyan.datacollection.application.eventproperty.TrackingEventPropertyService;
 import com.cyan.datacollection.application.eventproperty.bo.EventPropertyBO;
+import com.cyan.datacollection.domain.app.TrackingApp;
+import com.cyan.datacollection.domain.app.repository.TrackingAppRepository;
 import com.cyan.datacollection.domain.event.TrackingEvent;
 import com.cyan.datacollection.domain.event.query.TrackingEventPageQuery;
 import com.cyan.datacollection.domain.event.repository.TrackingEventRepository;
+import com.cyan.datacollection.enums.AppStatus;
 import com.cyan.datacollection.enums.EventStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,11 +33,14 @@ import java.util.List;
 public class TrackingEventServiceImpl implements TrackingEventService {
 
     private final TrackingEventRepository trackingEventRepository;
+    private final TrackingAppRepository trackingAppRepository;
     private final TrackingEventPropertyService trackingEventPropertyService;
 
     public TrackingEventServiceImpl(TrackingEventRepository trackingEventRepository,
+                                    TrackingAppRepository trackingAppRepository,
                                     TrackingEventPropertyService trackingEventPropertyService) {
         this.trackingEventRepository = trackingEventRepository;
+        this.trackingAppRepository = trackingAppRepository;
         this.trackingEventPropertyService = trackingEventPropertyService;
     }
 
@@ -50,7 +56,8 @@ public class TrackingEventServiceImpl implements TrackingEventService {
     @Override
     @Transactional
     public TrackingEventBO create(TrackingEventCmd cmd) {
-        TrackingEvent existing = trackingEventRepository.findByCode(cmd.getEventCode());
+        validateApp(cmd.getAppCode());
+        TrackingEvent existing = trackingEventRepository.findByAppCodeAndCode(cmd.getAppCode(), cmd.getEventCode());
         Assert.isNull(existing, new SilentException("事件编码已存在"));
 
         TrackingEvent event = TrackingEventAppConvert.INSTANCE.toTrackingEvent(cmd);
@@ -64,6 +71,9 @@ public class TrackingEventServiceImpl implements TrackingEventService {
         TrackingEvent existing = trackingEventRepository.findById(id);
         Assert.notNull(existing, new SilentException("事件不存在"));
         Assert.isTrue(existing.getStatus() == EventStatus.DRAFT, new SilentException("只有草稿状态可编辑"));
+        Assert.isTrue(existing.getAppCode() == null || existing.getAppCode().equals(cmd.getAppCode()),
+                new SilentException("事件所属应用不可修改"));
+        validateApp(cmd.getAppCode());
 
         TrackingEvent event = TrackingEventAppConvert.INSTANCE.toTrackingEvent(cmd);
         event.setId(existing.getId());
@@ -123,5 +133,14 @@ public class TrackingEventServiceImpl implements TrackingEventService {
         return list.stream()
                 .map(TrackingEventAppConvert.INSTANCE::toTrackingEventBO)
                 .toList();
+    }
+
+    /**
+     * 校验应用可用
+     */
+    private void validateApp(String appCode) {
+        TrackingApp app = trackingAppRepository.findByCode(appCode);
+        Assert.notNull(app, new SilentException("应用不存在"));
+        Assert.isTrue(app.getStatus() == AppStatus.ENABLED, new SilentException("应用已禁用"));
     }
 }

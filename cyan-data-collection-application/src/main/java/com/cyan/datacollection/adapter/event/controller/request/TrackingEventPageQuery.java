@@ -25,6 +25,11 @@ public class TrackingEventPageQuery {
     private long pageSize = 20;
 
     /**
+     * 应用编码
+     */
+    private String appCode;
+
+    /**
      * 事件编码（模糊）
      */
     private String eventCode;

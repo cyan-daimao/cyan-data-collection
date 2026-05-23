@@ -30,6 +30,11 @@ public interface TrackingEventRepository {
     TrackingEvent findByCode(String eventCode);
 
     /**
+     * 根据应用编码和事件编码查询
+     */
+    TrackingEvent findByAppCodeAndCode(String appCode, String eventCode);
+
+    /**
      * 保存
      */
     TrackingEvent save(TrackingEvent event);
