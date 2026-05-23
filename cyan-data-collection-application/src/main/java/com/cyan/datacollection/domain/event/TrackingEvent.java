@@ -117,6 +117,9 @@ public class TrackingEvent {
         Assert.notBlank(this.eventCode, new SilentException("事件编码不能为空"));
         Assert.notBlank(this.eventName, new SilentException("事件名称不能为空"));
         Assert.notNull(this.eventType, new SilentException("事件类型不能为空"));
+        Assert.notBlank(this.businessDomain, new SilentException("业务域不能为空"));
+        Assert.isTrue(this.eventCode.startsWith(this.businessDomain + "_"),
+                new SilentException("事件编码必须以业务域编码加下划线开头"));
         if (Boolean.TRUE.equals(this.isCore)) {
             Assert.notBlank(this.owner, new SilentException("核心事件必须配置负责人"));
             Assert.notBlank(this.triggerTiming, new SilentException("核心事件必须配置触发时机"));
