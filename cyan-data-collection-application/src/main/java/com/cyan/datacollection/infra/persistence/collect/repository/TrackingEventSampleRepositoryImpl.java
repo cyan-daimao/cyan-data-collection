@@ -2,7 +2,6 @@ package com.cyan.datacollection.infra.persistence.collect.repository;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.cyan.arch.common.api.Pageable;
 import com.cyan.datacollection.domain.collect.TrackingEventSample;
 import com.cyan.datacollection.domain.collect.query.TrackingEventSamplePageQuery;
 import com.cyan.datacollection.domain.collect.repository.TrackingEventSampleRepository;
@@ -14,6 +13,7 @@ import io.micrometer.common.util.StringUtils;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -57,8 +57,8 @@ public class TrackingEventSampleRepositoryImpl implements TrackingEventSampleRep
     @Override
     public TrackingEventSample save(TrackingEventSample sample) {
         TrackingEventSampleDO trackingEventSampleDO = TrackingEventSampleInfraConvert.INSTANCE.toTrackingEventSampleDO(sample);
-        trackingEventSampleDO.setCreatedAt(LocalDateTime.now());
-        trackingEventSampleDO.setUpdatedAt(LocalDateTime.now());
+        trackingEventSampleDO.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Shanghai")));
+        trackingEventSampleDO.setUpdatedAt(LocalDateTime.now(ZoneId.of("Asia/Shanghai")));
         trackingEventSampleMapper.insert(trackingEventSampleDO);
         return findById(String.valueOf(trackingEventSampleDO.getId()));
     }
