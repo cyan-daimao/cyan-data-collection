@@ -28,6 +28,16 @@ import java.util.regex.Pattern;
 @Service
 public class TrackingEventValidateServiceImpl implements TrackingEventValidateService {
 
+    /**
+     * 四段式协议保留字段，由采集协议治理，不要求绑定为事件业务属性。
+     */
+    private static final Set<String> SYSTEM_PROPERTY_CODES = Set.of(
+            "appCode", "terminalType", "environment", "userId", "anonymousId", "sessionId",
+            "deviceId", "sdkVersion", "appVersion", "pageCode",
+            "eventCode", "eventTime", "eventType",
+            "requestId", "debugToken"
+    );
+
     private final TrackingEventPropertyRepository trackingEventPropertyRepository;
 
     public TrackingEventValidateServiceImpl(TrackingEventPropertyRepository trackingEventPropertyRepository) {
@@ -102,7 +112,7 @@ public class TrackingEventValidateServiceImpl implements TrackingEventValidateSe
         // 2. 校验未知属性
         if (properties != null) {
             for (String key : properties.keySet()) {
-                if (!ruleMap.containsKey(key)) {
+                if (!ruleMap.containsKey(key) && !SYSTEM_PROPERTY_CODES.contains(key)) {
                     warnErrors.add("[WARN] 未定义属性 " + key);
                 }
             }
