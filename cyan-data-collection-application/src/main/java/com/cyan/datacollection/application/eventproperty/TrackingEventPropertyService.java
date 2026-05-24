@@ -22,6 +22,13 @@ public interface TrackingEventPropertyService {
     void configProperties(String eventId, List<EventPropertyConfigCmd> cmds);
 
     /**
+     * 绑定系统属性模板
+     *
+     * @param eventId 事件ID
+     */
+    void bindSystemProperties(String eventId);
+
+    /**
      * 查询事件属性列表
      *
      * @param eventId 事件ID

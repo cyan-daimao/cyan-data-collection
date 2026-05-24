@@ -40,19 +40,19 @@ public class TrackingEventKafkaProducer {
      * @param message 事件消息 Map
      */
     public void send(Map<String, Object> message) {
-        String key = (String) message.getOrDefault("requestId", "");
+        String key = (String) message.getOrDefault("request_id", "");
         String payload = JSON.toJSONString(message);
 
-        String appCode = (String) message.getOrDefault("appCode", "unknown");
-        String eventCode = (String) message.getOrDefault("eventCode", "unknown");
+        String appCode = (String) message.getOrDefault("app_code", "unknown");
+        String eventCode = (String) message.getOrDefault("event_code", "unknown");
 
         CompletableFuture<SendResult<String, String>> future = kafkaTemplate.send(topic, key, payload);
         future.whenComplete((result, ex) -> {
             if (ex != null) {
-                log.error("[Kafka] 事件发送失败, requestId={}, error={}", key, ex.getMessage(), ex);
+                log.error("[Kafka] 事件发送失败, request_id={}, error={}", key, ex.getMessage(), ex);
                 collectMetricsService.recordKafkaFailed(appCode, eventCode, ex.getClass().getSimpleName());
             } else {
-                log.debug("[Kafka] 事件发送成功, requestId={}, partition={}, offset={}",
+                log.debug("[Kafka] 事件发送成功, request_id={}, partition={}, offset={}",
                         key, result.getRecordMetadata().partition(), result.getRecordMetadata().offset());
                 collectMetricsService.recordKafkaSent(appCode, eventCode);
             }
@@ -65,14 +65,14 @@ public class TrackingEventKafkaProducer {
      * @param message 事件消息 Map
      */
     public void sendSync(Map<String, Object> message) throws Exception {
-        String key = (String) message.getOrDefault("requestId", "");
+        String key = (String) message.getOrDefault("request_id", "");
         String payload = JSON.toJSONString(message);
-        String appCode = (String) message.getOrDefault("appCode", "unknown");
-        String eventCode = (String) message.getOrDefault("eventCode", "unknown");
+        String appCode = (String) message.getOrDefault("app_code", "unknown");
+        String eventCode = (String) message.getOrDefault("event_code", "unknown");
 
         try {
             SendResult<String, String> result = kafkaTemplate.send(topic, key, payload).get();
-            log.debug("[Kafka] 事件同步发送成功, requestId={}, partition={}, offset={}",
+            log.debug("[Kafka] 事件同步发送成功, request_id={}, partition={}, offset={}",
                     key, result.getRecordMetadata().partition(), result.getRecordMetadata().offset());
             collectMetricsService.recordKafkaSent(appCode, eventCode);
         } catch (Exception e) {

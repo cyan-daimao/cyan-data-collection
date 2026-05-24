@@ -29,13 +29,13 @@ import java.util.regex.Pattern;
 public class TrackingEventValidateServiceImpl implements TrackingEventValidateService {
 
     /**
-     * 四段式协议保留字段，由采集协议治理，不要求绑定为事件业务属性。
+     * 四段式协议系统字段，由采集协议治理，并由事件创建流程自动绑定。
      */
     private static final Set<String> SYSTEM_PROPERTY_CODES = Set.of(
-            "appCode", "terminalType", "environment", "userId", "anonymousId", "sessionId",
-            "deviceId", "sdkVersion", "appVersion", "pageCode",
-            "eventCode", "eventTime", "eventType",
-            "requestId", "debugToken"
+            "app_code", "terminal_type", "environment", "anonymous_id", "session_id",
+            "device_id", "sdk_version", "app_version", "page_code",
+            "event_code", "event_time", "event_type",
+            "request_id", "debug_token"
     );
 
     private final TrackingEventPropertyRepository trackingEventPropertyRepository;

@@ -78,19 +78,19 @@ public class TrackingCollectServiceImpl implements TrackingCollectService {
         long startTime = System.currentTimeMillis();
         List<String> errors = new ArrayList<>();
         ValidateStatus baseStatus = ValidateStatus.PASS;
-        String appCode = getString(cmd.getCommon(), "appCode");
-        String eventCode = getString(cmd.getAction(), "eventCode");
-        String eventTimeText = getString(cmd.getAction(), "eventTime");
-        String requestId = getString(cmd.getExtra(), "requestId");
-        String debugToken = getString(cmd.getExtra(), "debugToken");
-        String terminalType = getString(cmd.getCommon(), "terminalType");
+        String appCode = getString(cmd.getCommon(), "app_code");
+        String eventCode = getString(cmd.getAction(), "event_code");
+        String eventTimeText = getString(cmd.getAction(), "event_time");
+        String requestId = getString(cmd.getExtra(), "request_id");
+        String debugToken = getString(cmd.getExtra(), "debug_token");
+        String terminalType = getString(cmd.getCommon(), "terminal_type");
         String environment = getString(cmd.getCommon(), "environment");
         LocalDateTime eventTime = parseEventTime(eventTimeText, errors);
 
         // 校验 appCode
         TrackingApp app = appCode != null ? trackingAppRepository.findByCode(appCode) : null;
         if (appCode == null || appCode.isBlank()) {
-            errors.add("[FAIL] common.appCode 不能为空");
+            errors.add("[FAIL] common.app_code 不能为空");
             baseStatus = ValidateStatus.FAIL;
         }
         if (app == null) {
@@ -104,7 +104,7 @@ public class TrackingCollectServiceImpl implements TrackingCollectService {
         // 校验 eventCode
         TrackingEvent event = appCode != null && eventCode != null ? trackingEventRepository.findByAppCodeAndCode(appCode, eventCode) : null;
         if (eventCode == null || eventCode.isBlank()) {
-            errors.add("[FAIL] action.eventCode 不能为空");
+            errors.add("[FAIL] action.event_code 不能为空");
             baseStatus = ValidateStatus.FAIL;
         }
         if (event == null) {
@@ -117,7 +117,7 @@ public class TrackingCollectServiceImpl implements TrackingCollectService {
 
         // 校验 eventTime
         if (eventTimeText == null || eventTimeText.isBlank()) {
-            errors.add("[FAIL] action.eventTime 不能为空");
+            errors.add("[FAIL] action.event_time 不能为空");
             baseStatus = ValidateStatus.FAIL;
         } else if (eventTime == null) {
             baseStatus = ValidateStatus.FAIL;
@@ -125,7 +125,7 @@ public class TrackingCollectServiceImpl implements TrackingCollectService {
 
         // 校验 terminalType
         if (terminalType != null && TerminalType.of(terminalType) == null) {
-            errors.add("[FAIL] common.terminalType 不合法: " + terminalType);
+            errors.add("[FAIL] common.terminal_type 不合法: " + terminalType);
             baseStatus = ValidateStatus.FAIL;
         }
 
@@ -203,24 +203,24 @@ public class TrackingCollectServiceImpl implements TrackingCollectService {
      */
     private void sendToKafka(EventCollectCmd cmd, ValidateStatus finalStatus, List<String> errors) {
         try {
-            String appCode = getString(cmd.getCommon(), "appCode");
-            String eventCode = getString(cmd.getAction(), "eventCode");
-            String eventTime = getString(cmd.getAction(), "eventTime");
-            String requestId = getString(cmd.getExtra(), "requestId");
-            String debugToken = getString(cmd.getExtra(), "debugToken");
+            String appCode = getString(cmd.getCommon(), "app_code");
+            String eventCode = getString(cmd.getAction(), "event_code");
+            String eventTime = getString(cmd.getAction(), "event_time");
+            String requestId = getString(cmd.getExtra(), "request_id");
+            String debugToken = getString(cmd.getExtra(), "debug_token");
             Map<String, Object> message = new HashMap<>();
-            message.put("requestId", requestId);
-            message.put("appCode", appCode);
-            message.put("eventCode", eventCode);
-            message.put("eventTime", eventTime);
-            message.put("ingestionTime", LocalDateTime.now(ZoneId.of("Asia/Shanghai")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            message.put("debugToken", debugToken);
+            message.put("request_id", requestId);
+            message.put("app_code", appCode);
+            message.put("event_code", eventCode);
+            message.put("event_time", eventTime);
+            message.put("ingestion_time", LocalDateTime.now(ZoneId.of("Asia/Shanghai")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            message.put("debug_token", debugToken);
             message.put("common", JSON.toJSONString(emptyIfNull(cmd.getCommon())));
             message.put("action", JSON.toJSONString(emptyIfNull(cmd.getAction())));
             message.put("business", JSON.toJSONString(emptyIfNull(cmd.getBusiness())));
             message.put("extra", JSON.toJSONString(emptyIfNull(cmd.getExtra())));
-            message.put("validateStatus", finalStatus != null ? finalStatus.name() : null);
-            message.put("validateErrors", JSON.toJSONString(errors));
+            message.put("validate_status", finalStatus != null ? finalStatus.name() : null);
+            message.put("validate_errors", JSON.toJSONString(errors));
             message.put("payload", JSON.toJSONString(cmd));
 
             if (sendSync) {
@@ -229,7 +229,7 @@ public class TrackingCollectServiceImpl implements TrackingCollectService {
                 trackingEventKafkaProducer.send(message);
             }
         } catch (Exception e) {
-            log.error("[Collect] Kafka 发送失败, requestId={}, eventCode={}", getString(cmd.getExtra(), "requestId"), getString(cmd.getAction(), "eventCode"), e);
+            log.error("[Collect] Kafka 发送失败, request_id={}, event_code={}", getString(cmd.getExtra(), "request_id"), getString(cmd.getAction(), "event_code"), e);
             // 最小交付版本：Kafka 发送失败不阻断返回，仅记录日志
         }
     }
@@ -282,7 +282,7 @@ public class TrackingCollectServiceImpl implements TrackingCollectService {
             try {
                 return LocalDateTime.parse(eventTime);
             } catch (DateTimeParseException ex) {
-                errors.add("[FAIL] action.eventTime 格式错误，期望 yyyy-MM-dd HH:mm:ss");
+                errors.add("[FAIL] action.event_time 格式错误，期望 yyyy-MM-dd HH:mm:ss");
                 return null;
             }
         }

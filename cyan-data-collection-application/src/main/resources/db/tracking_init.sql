@@ -357,26 +357,50 @@ INSERT INTO tracking_event (id, app_code, event_code, event_name, event_type, bu
 VALUES (1000001, 'dataman_web', 'bigdata_module_click', '模块点击', 'CLICK', 'bigdata', '平台模块点击事件，用于统计各模块的访问热度', '用户点击平台左侧菜单、顶部导航或首页模块卡片时触发', 'WEB', 'system', 1, 'PUBLISHED', 1, 'system', 'system')
 ON DUPLICATE KEY UPDATE app_code = VALUES(app_code), event_code = VALUES(event_code), business_domain = VALUES(business_domain), updated_at = CURRENT_TIMESTAMP;
 
--- module_click 属性
+-- 系统协议属性 + module_click 业务属性
 INSERT INTO tracking_property (id, property_code, property_name, property_type, data_type, description, is_required, is_sensitive, status, version, created_by, updated_by)
 VALUES
-(1000001, 'moduleCode', '模块编码', 'EVENT', 'STRING', '模块稳定编码，如 data_assets、data_collection', 1, 0, 'PUBLISHED', 1, 'system', 'system'),
-(1000002, 'moduleName', '模块名称', 'EVENT', 'STRING', '模块名称，如 数据资产、数据采集', 1, 0, 'PUBLISHED', 1, 'system', 'system'),
-(1000003, 'parentModuleCode', '父模块编码', 'EVENT', 'STRING', '父模块编码，如一级菜单编码', 0, 0, 'PUBLISHED', 1, 'system', 'system'),
-(1000004, 'routePath', '路由路径', 'EVENT', 'STRING', '点击后跳转的路由路径，如 /data-assets', 1, 0, 'PUBLISHED', 1, 'system', 'system'),
-(1000005, 'clickPosition', '点击位置', 'EVENT', 'STRING', '点击位置，如 sidebar_menu、top_nav、home_card', 0, 0, 'PUBLISHED', 1, 'system', 'system'),
-(1000006, 'sourcePage', '来源页面', 'EVENT', 'STRING', '点击来源页面编码', 0, 0, 'PUBLISHED', 1, 'system', 'system')
+(1000001, 'app_code', '应用编码', 'COMMON', 'STRING', '系统协议字段，应用编码', 1, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000002, 'terminal_type', '终端类型', 'COMMON', 'STRING', '系统协议字段，终端类型，如 WEB、IOS、ANDROID', 1, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000003, 'environment', '环境', 'COMMON', 'STRING', '系统协议字段，环境，如 TEST、PROD', 1, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000004, 'anonymous_id', '匿名ID', 'COMMON', 'STRING', '系统协议字段，匿名用户标识', 1, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000005, 'session_id', '会话ID', 'COMMON', 'STRING', '系统协议字段，会话标识', 1, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000006, 'page_code', '页面编码', 'COMMON', 'STRING', '系统协议字段，当前页面编码或路由', 1, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000007, 'event_code', '事件编码', 'COMMON', 'STRING', '系统协议字段，事件编码', 1, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000008, 'event_time', '事件时间', 'COMMON', 'DATETIME', '系统协议字段，事件发生时间', 1, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000009, 'event_type', '事件类型', 'COMMON', 'STRING', '系统协议字段，事件类型', 1, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000010, 'request_id', '请求ID', 'COMMON', 'STRING', '系统协议字段，单次上报请求ID', 1, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000011, 'debug_token', 'Debug Token', 'COMMON', 'STRING', '系统协议字段，Debug 会话 Token', 0, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000101, 'module_code', '模块编码', 'EVENT', 'STRING', '模块稳定编码，如 data_assets、data_collection', 1, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000102, 'module_name', '模块名称', 'EVENT', 'STRING', '模块名称，如 数据资产、数据采集', 1, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000103, 'parent_module_code', '父模块编码', 'EVENT', 'STRING', '父模块编码，如一级菜单编码', 0, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000104, 'route_path', '路由路径', 'EVENT', 'STRING', '点击后跳转的路由路径，如 /data-assets', 1, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000105, 'click_position', '点击位置', 'EVENT', 'STRING', '点击位置，如 sidebar_menu、top_nav、home_card', 0, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000106, 'source_page', '来源页面', 'EVENT', 'STRING', '点击来源页面编码', 0, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000107, 'employee_id', '员工ID', 'EVENT', 'STRING', '当前登录员工ID', 1, 0, 'PUBLISHED', 1, 'system', 'system')
 ON DUPLICATE KEY UPDATE updated_at = CURRENT_TIMESTAMP;
 
 -- module_click 事件属性绑定
 INSERT INTO tracking_event_property (id, event_id, property_id, is_required, description, created_by, updated_by)
 VALUES
-(1000001, 1000001, 1000001, 1, '模块编码', 'system', 'system'),
-(1000002, 1000001, 1000002, 1, '模块名称', 'system', 'system'),
-(1000003, 1000001, 1000003, 0, '父模块编码', 'system', 'system'),
-(1000004, 1000001, 1000004, 1, '路由路径', 'system', 'system'),
-(1000005, 1000001, 1000005, 0, '点击位置', 'system', 'system'),
-(1000006, 1000001, 1000006, 0, '来源页面', 'system', 'system')
+(1000001, 1000001, 1000001, 1, '应用编码', 'system', 'system'),
+(1000002, 1000001, 1000002, 1, '终端类型', 'system', 'system'),
+(1000003, 1000001, 1000003, 1, '环境', 'system', 'system'),
+(1000004, 1000001, 1000004, 1, '匿名ID', 'system', 'system'),
+(1000005, 1000001, 1000005, 1, '会话ID', 'system', 'system'),
+(1000006, 1000001, 1000006, 1, '页面编码', 'system', 'system'),
+(1000007, 1000001, 1000007, 1, '事件编码', 'system', 'system'),
+(1000008, 1000001, 1000008, 1, '事件时间', 'system', 'system'),
+(1000009, 1000001, 1000009, 1, '事件类型', 'system', 'system'),
+(1000010, 1000001, 1000010, 1, '请求ID', 'system', 'system'),
+(1000011, 1000001, 1000011, 0, 'Debug Token', 'system', 'system'),
+(1000101, 1000001, 1000101, 1, '模块编码', 'system', 'system'),
+(1000102, 1000001, 1000102, 1, '模块名称', 'system', 'system'),
+(1000103, 1000001, 1000103, 0, '父模块编码', 'system', 'system'),
+(1000104, 1000001, 1000104, 1, '路由路径', 'system', 'system'),
+(1000105, 1000001, 1000105, 0, '点击位置', 'system', 'system'),
+(1000106, 1000001, 1000106, 0, '来源页面', 'system', 'system'),
+(1000107, 1000001, 1000107, 1, '员工ID', 'system', 'system')
 ON DUPLICATE KEY UPDATE updated_at = CURRENT_TIMESTAMP;
 
 -- 属性维度映射表

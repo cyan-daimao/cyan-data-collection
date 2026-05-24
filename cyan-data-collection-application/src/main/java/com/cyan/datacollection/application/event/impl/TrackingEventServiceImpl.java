@@ -62,6 +62,7 @@ public class TrackingEventServiceImpl implements TrackingEventService {
 
         TrackingEvent event = TrackingEventAppConvert.INSTANCE.toTrackingEvent(cmd);
         event = event.save(trackingEventRepository);
+        trackingEventPropertyService.bindSystemProperties(event.getId());
         return TrackingEventAppConvert.INSTANCE.toTrackingEventBO(event);
     }
 
