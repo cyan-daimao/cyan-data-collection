@@ -103,20 +103,16 @@ public class TrackingMetricFlinkSqlGenerator {
                   request_id STRING,
                   app_code STRING,
                   event_code STRING,
-                  event_time TIMESTAMP(3),
-                  ingestion_time TIMESTAMP(3),
-                  terminal_type STRING,
-                  environment STRING,
-                  user_id STRING,
-                  anonymous_id STRING,
-                  session_id STRING,
-                  device_id STRING,
-                  page_code STRING,
+                  event_time STRING,
+                  ingestion_time STRING,
                   debug_token STRING,
+                  common STRING,
+                  action STRING,
+                  business STRING,
+                  extra STRING,
+                  payload STRING,
                   validate_status STRING,
                   validate_errors STRING,
-                  properties STRING,
-                  payload STRING,
                   dt STRING
                 );
                 
@@ -167,21 +163,17 @@ public class TrackingMetricFlinkSqlGenerator {
                   JSON_VALUE(raw, '$.requestId') AS request_id,
                   JSON_VALUE(raw, '$.appCode') AS app_code,
                   JSON_VALUE(raw, '$.eventCode') AS event_code,
-                  CAST(JSON_VALUE(raw, '$.eventTime') AS TIMESTAMP) AS event_time,
-                  CAST(JSON_VALUE(raw, '$.ingestionTime') AS TIMESTAMP) AS ingestion_time,
-                  JSON_VALUE(raw, '$.terminalType') AS terminal_type,
-                  JSON_VALUE(raw, '$.environment') AS environment,
-                  JSON_VALUE(raw, '$.userId') AS user_id,
-                  JSON_VALUE(raw, '$.anonymousId') AS anonymous_id,
-                  JSON_VALUE(raw, '$.sessionId') AS session_id,
-                  JSON_VALUE(raw, '$.deviceId') AS device_id,
-                  JSON_VALUE(raw, '$.pageCode') AS page_code,
+                  JSON_VALUE(raw, '$.eventTime') AS event_time,
+                  JSON_VALUE(raw, '$.ingestionTime') AS ingestion_time,
                   JSON_VALUE(raw, '$.debugToken') AS debug_token,
+                  JSON_QUERY(raw, '$.common') AS common,
+                  JSON_QUERY(raw, '$.action') AS action,
+                  JSON_QUERY(raw, '$.business') AS business,
+                  JSON_QUERY(raw, '$.extra') AS extra,
+                  JSON_VALUE(raw, '$.payload') AS payload,
                   JSON_VALUE(raw, '$.validateStatus') AS validate_status,
-                  JSON_QUERY(raw, '$.validateErrors') AS validate_errors,
-                  JSON_QUERY(raw, '$.properties') AS properties,
-                  raw AS payload,
-                  DATE_FORMAT(CURRENT_TIMESTAMP, 'yyyy-MM-dd') AS dt
+                  JSON_VALUE(raw, '$.validateErrors') AS validate_errors,
+                  SUBSTRING(JSON_VALUE(raw, '$.eventTime'), 1, 10) AS dt
                 FROM kafka_source
                 WHERE JSON_VALUE(raw, '$.eventCode') = '%s';
                 
@@ -190,7 +182,7 @@ public class TrackingMetricFlinkSqlGenerator {
 
     private String buildDwdInsert(TrackingMetricPipeline pipeline, List<String> dimensions) {
         String dimSelect = dimensions.stream()
-                .map(d -> String.format("  JSON_VALUE(raw, '$.properties.%s') AS %s,", d, d))
+                .map(d -> String.format("  %s AS %s,", jsonSectionValue(d), d))
                 .collect(Collectors.joining("\n"));
         if (!dimSelect.isEmpty()) {
             dimSelect = ",\n" + dimSelect;
@@ -203,10 +195,10 @@ public class TrackingMetricFlinkSqlGenerator {
                   JSON_VALUE(raw, '$.appCode') AS app_code,
                   JSON_VALUE(raw, '$.eventCode') AS event_code,
                   CAST(JSON_VALUE(raw, '$.eventTime') AS TIMESTAMP) AS event_time,
-                  JSON_VALUE(raw, '$.userId') AS user_id,
-                  JSON_VALUE(raw, '$.anonymousId') AS anonymous_id,
-                  JSON_VALUE(raw, '$.sessionId') AS session_id%s,
-                  DATE_FORMAT(CURRENT_TIMESTAMP, 'yyyy-MM-dd') AS dt
+                  JSON_VALUE(raw, '$.common.userId') AS user_id,
+                  JSON_VALUE(raw, '$.common.anonymousId') AS anonymous_id,
+                  JSON_VALUE(raw, '$.common.sessionId') AS session_id%s,
+                  SUBSTRING(JSON_VALUE(raw, '$.eventTime'), 1, 10) AS dt
                 FROM kafka_source
                 WHERE JSON_VALUE(raw, '$.eventCode') = '%s';
                 
@@ -216,14 +208,14 @@ public class TrackingMetricFlinkSqlGenerator {
     private String buildDwsInsert(TrackingMetricPipeline pipeline, List<String> dimensions,
                                    List<TrackingMetricPipelineCmd.MeasureCmd> measures) {
         String dimSelect = dimensions.stream()
-                .map(d -> String.format("  JSON_VALUE(raw, '$.properties.%s') AS %s", d, d))
+                .map(d -> String.format("  %s AS %s", jsonSectionValue(d), d))
                 .collect(Collectors.joining(",\n"));
         if (!dimSelect.isEmpty()) {
             dimSelect = dimSelect + ",\n";
         }
 
         String dimGroupBy = dimensions.stream()
-                .map(d -> String.format("JSON_VALUE(raw, '$.properties.%s')", d))
+                .map(this::jsonSectionValue)
                 .collect(Collectors.joining(", "));
         if (!dimGroupBy.isEmpty()) {
             dimGroupBy = ", " + dimGroupBy;
@@ -236,13 +228,13 @@ public class TrackingMetricFlinkSqlGenerator {
         return String.format("""
                 INSERT INTO rest.dws.%s
                 SELECT
-                  DATE_FORMAT(CURRENT_TIMESTAMP, 'yyyy-MM-dd') AS dt,
+                  SUBSTRING(JSON_VALUE(raw, '$.eventTime'), 1, 10) AS dt,
                   JSON_VALUE(raw, '$.appCode') AS app_code,
                   %s
                   %s
                 FROM kafka_source
                 WHERE JSON_VALUE(raw, '$.eventCode') = '%s'
-                GROUP BY DATE_FORMAT(CURRENT_TIMESTAMP, 'yyyy-MM-dd'), JSON_VALUE(raw, '$.appCode')%s;
+                GROUP BY SUBSTRING(JSON_VALUE(raw, '$.eventTime'), 1, 10), JSON_VALUE(raw, '$.appCode')%s;
                 
                 """, pipeline.getDwsTableName(), dimSelect, measureSelect,
                 pipeline.getEventCode(), dimGroupBy);
@@ -259,7 +251,14 @@ public class TrackingMetricFlinkSqlGenerator {
         if (expr == null || expr.isBlank()) {
             return "COUNT(*)";
         }
-        return expr.replace("COUNT(DISTINCT user_id)", "COUNT(DISTINCT JSON_VALUE(raw, '$.userId'))")
-                .replace("count(distinct user_id)", "COUNT(DISTINCT JSON_VALUE(raw, '$.userId'))");
+        return expr.replace("COUNT(DISTINCT user_id)", "COUNT(DISTINCT JSON_VALUE(raw, '$.common.userId'))")
+                .replace("count(distinct user_id)", "COUNT(DISTINCT JSON_VALUE(raw, '$.common.userId'))");
+    }
+
+    private String jsonSectionValue(String propertyCode) {
+        return String.format(
+                "COALESCE(JSON_VALUE(raw, '$.business.%s'), JSON_VALUE(raw, '$.action.%s'), JSON_VALUE(raw, '$.common.%s'), JSON_VALUE(raw, '$.extra.%s'))",
+                propertyCode, propertyCode, propertyCode, propertyCode
+        );
     }
 }

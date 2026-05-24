@@ -5,8 +5,6 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.cyan.datacollection.enums.Environment;
-import com.cyan.datacollection.enums.TerminalType;
 import com.cyan.datacollection.enums.ValidateStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -41,12 +39,6 @@ public class TrackingEventSampleDO {
     private String appCode;
 
     /**
-     * Debug令牌
-     */
-    @TableField("debug_token")
-    private String debugToken;
-
-    /**
      * 事件编码
      */
     @TableField("event_code")
@@ -65,58 +57,34 @@ public class TrackingEventSampleDO {
     private LocalDateTime ingestionTime;
 
     /**
-     * 终端类型
+     * Debug令牌
      */
-    @TableField("terminal_type")
-    private TerminalType terminalType;
+    @TableField("debug_token")
+    private String debugToken;
 
     /**
-     * 环境
+     * 公共上下文JSON
      */
-    @TableField("environment")
-    private Environment environment;
+    @TableField("common")
+    private String common;
 
     /**
-     * 用户ID
+     * 行为信息JSON
      */
-    @TableField("user_id")
-    private String userId;
+    @TableField("action")
+    private String action;
 
     /**
-     * 匿名ID
+     * 业务字段JSON
      */
-    @TableField("anonymous_id")
-    private String anonymousId;
+    @TableField("business")
+    private String business;
 
     /**
-     * 会话ID
+     * 额外扩展JSON
      */
-    @TableField("session_id")
-    private String sessionId;
-
-    /**
-     * 设备ID
-     */
-    @TableField("device_id")
-    private String deviceId;
-
-    /**
-     * SDK版本
-     */
-    @TableField("sdk_version")
-    private String sdkVersion;
-
-    /**
-     * 应用版本
-     */
-    @TableField("app_version")
-    private String appVersion;
-
-    /**
-     * 页面编码
-     */
-    @TableField("page_code")
-    private String pageCode;
+    @TableField("extra")
+    private String extra;
 
     /**
      * 请求ID

@@ -107,6 +107,26 @@ public class DebugEventSampleDTO {
     private String requestId;
 
     /**
+     * 公共上下文JSON
+     */
+    private String common;
+
+    /**
+     * 行为信息JSON
+     */
+    private String action;
+
+    /**
+     * 业务字段JSON
+     */
+    private String business;
+
+    /**
+     * 额外扩展JSON
+     */
+    private String extra;
+
+    /**
      * 原始JSON payload
      */
     private String payload;

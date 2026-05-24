@@ -12,11 +12,15 @@ import com.cyan.datacollection.domain.collect.query.TrackingEventSamplePageQuery
 import com.cyan.datacollection.domain.collect.repository.TrackingEventSampleRepository;
 import com.cyan.datacollection.domain.debug.TrackingDebugSession;
 import com.cyan.datacollection.domain.debug.repository.TrackingDebugSessionRepository;
+import com.cyan.datacollection.enums.Environment;
+import com.cyan.datacollection.enums.TerminalType;
+import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Debug 控制台服务实现
@@ -105,6 +109,7 @@ public class TrackingDebugServiceImpl implements TrackingDebugService {
         if (sample == null) {
             return null;
         }
+        Map<String, Object> common = parseJson(sample.getCommon());
         return new DebugEventSampleBO()
                 .setId(sample.getId())
                 .setAppCode(sample.getAppCode())
@@ -112,19 +117,42 @@ public class TrackingDebugServiceImpl implements TrackingDebugService {
                 .setEventCode(sample.getEventCode())
                 .setEventTime(sample.getEventTime())
                 .setIngestionTime(sample.getIngestionTime())
-                .setTerminalType(sample.getTerminalType())
-                .setEnvironment(sample.getEnvironment())
-                .setUserId(sample.getUserId())
-                .setAnonymousId(sample.getAnonymousId())
-                .setSessionId(sample.getSessionId())
-                .setDeviceId(sample.getDeviceId())
-                .setSdkVersion(sample.getSdkVersion())
-                .setAppVersion(sample.getAppVersion())
-                .setPageCode(sample.getPageCode())
+                .setTerminalType(ofTerminal(common.get("terminalType")))
+                .setEnvironment(ofEnvironment(common.get("environment")))
+                .setUserId(stringValue(common.get("userId")))
+                .setAnonymousId(stringValue(common.get("anonymousId")))
+                .setSessionId(stringValue(common.get("sessionId")))
+                .setDeviceId(stringValue(common.get("deviceId")))
+                .setSdkVersion(stringValue(common.get("sdkVersion")))
+                .setAppVersion(stringValue(common.get("appVersion")))
+                .setPageCode(stringValue(common.get("pageCode")))
                 .setRequestId(sample.getRequestId())
+                .setCommon(sample.getCommon())
+                .setAction(sample.getAction())
+                .setBusiness(sample.getBusiness())
+                .setExtra(sample.getExtra())
                 .setPayload(sample.getPayload())
                 .setValidateStatus(sample.getValidateStatus())
                 .setValidateErrors(sample.getValidateErrors())
                 .setCreatedAt(sample.getCreatedAt());
+    }
+
+    private Map<String, Object> parseJson(String json) {
+        if (json == null || json.isBlank()) {
+            return Map.of();
+        }
+        return JSON.parseObject(json, Map.class);
+    }
+
+    private String stringValue(Object value) {
+        return value == null ? null : String.valueOf(value);
+    }
+
+    private TerminalType ofTerminal(Object value) {
+        return value == null ? null : TerminalType.of(String.valueOf(value));
+    }
+
+    private Environment ofEnvironment(Object value) {
+        return value == null ? null : Environment.of(String.valueOf(value));
     }
 }

@@ -72,10 +72,10 @@ public class TrackingWorkbenchServiceImpl implements TrackingWorkbenchService {
         List<TrackingAlert> alerts = trackingAlertRepository.findOpenByLevel("ERROR");
         return alerts.stream().map(alert -> new WorkbenchQualityRiskBO()
                 .setId(alert.getId())
-                .setAlertType(alert.getAlertType() != null ? alert.getAlertType().getCode() : null)
+                .setAlertType(alert.getAlertType() != null ? alert.getAlertType().name() : null)
                 .setAppCode(alert.getAppCode())
                 .setEventCode(alert.getEventCode())
-                .setAlertLevel(alert.getAlertLevel() != null ? alert.getAlertLevel().getCode() : null)
+                .setAlertLevel(alert.getAlertLevel() != null ? alert.getAlertLevel().name() : null)
                 .setAlertMessage(alert.getAlertMessage())
                 .setTriggeredAt(alert.getTriggeredAt())
         ).toList();

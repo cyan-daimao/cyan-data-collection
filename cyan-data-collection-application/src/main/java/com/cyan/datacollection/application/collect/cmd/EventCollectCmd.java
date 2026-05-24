@@ -5,7 +5,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
-import java.time.LocalDateTime;
 import java.util.Map;
 
 /**
@@ -20,19 +19,23 @@ import java.util.Map;
 @Accessors(chain = true)
 public class EventCollectCmd {
 
-    private String appCode;
-    private String debugToken;
-    private String eventCode;
-    private LocalDateTime eventTime;
-    private String terminalType;
-    private String environment;
-    private String userId;
-    private String anonymousId;
-    private String sessionId;
-    private String deviceId;
-    private String sdkVersion;
-    private String appVersion;
-    private String pageCode;
-    private String requestId;
-    private Map<String, Object> properties;
+    /**
+     * 公共上下文
+     */
+    private Map<String, Object> common;
+
+    /**
+     * 行为信息
+     */
+    private Map<String, Object> action;
+
+    /**
+     * 业务字段
+     */
+    private Map<String, Object> business;
+
+    /**
+     * 额外扩展字段
+     */
+    private Map<String, Object> extra;
 }

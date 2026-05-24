@@ -5,9 +5,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-
-import java.time.LocalDateTime;
 import java.util.Map;
 
 /**
@@ -23,78 +20,22 @@ import java.util.Map;
 public class EventCollectRequest {
 
     /**
-     * 应用编码
+     * 公共上下文
      */
-    private String appCode;
+    private Map<String, Object> common;
 
     /**
-     * Debug Token
+     * 行为信息
      */
-    private String debugToken;
+    private Map<String, Object> action;
 
     /**
-     * 事件编码
+     * 业务字段
      */
-    private String eventCode;
+    private Map<String, Object> business;
 
     /**
-     * 事件发生时间
+     * 额外扩展字段
      */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private LocalDateTime eventTime;
-
-    /**
-     * 端类型
-     */
-    private String terminalType;
-
-    /**
-     * 环境
-     */
-    private String environment;
-
-    /**
-     * 用户ID
-     */
-    private String userId;
-
-    /**
-     * 匿名ID
-     */
-    private String anonymousId;
-
-    /**
-     * 会话ID
-     */
-    private String sessionId;
-
-    /**
-     * 设备ID
-     */
-    private String deviceId;
-
-    /**
-     * SDK版本
-     */
-    private String sdkVersion;
-
-    /**
-     * 应用版本
-     */
-    private String appVersion;
-
-    /**
-     * 页面编码
-     */
-    private String pageCode;
-
-    /**
-     * 请求ID
-     */
-    private String requestId;
-
-    /**
-     * 属性
-     */
-    private Map<String, Object> properties;
+    private Map<String, Object> extra;
 }

@@ -146,33 +146,27 @@ CREATE TABLE IF NOT EXISTS tracking_app (
 -- 上报事件样本表
 CREATE TABLE IF NOT EXISTS tracking_event_sample (
     id BIGINT NOT NULL PRIMARY KEY,
-    app_code VARCHAR(128) NOT NULL COMMENT '应用编码',
-    debug_token VARCHAR(128) COMMENT 'Debug Token',
-    event_code VARCHAR(128) NOT NULL COMMENT '事件编码',
-    event_time DATETIME NOT NULL COMMENT '事件发生时间',
-    ingestion_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '服务端接收时间',
-    terminal_type VARCHAR(64) COMMENT '端类型: WEB, IOS, ANDROID, MINI_PROGRAM, SERVER',
-    environment VARCHAR(64) COMMENT '环境: DEV, TEST, PRE, PROD',
-    user_id VARCHAR(128) COMMENT '用户ID',
-    anonymous_id VARCHAR(128) COMMENT '匿名ID',
-    session_id VARCHAR(128) COMMENT '会话ID',
-    device_id VARCHAR(128) COMMENT '设备ID',
-    sdk_version VARCHAR(64) COMMENT 'SDK版本',
-    app_version VARCHAR(64) COMMENT '应用版本',
-    page_code VARCHAR(128) COMMENT '页面编码',
     request_id VARCHAR(128) COMMENT '请求ID',
-    payload LONGTEXT COMMENT '原始JSON payload',
+    app_code VARCHAR(128) COMMENT '应用编码',
+    event_code VARCHAR(128) COMMENT '事件编码',
+    event_time DATETIME COMMENT '事件发生时间',
+    ingestion_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '服务端接收时间',
+    debug_token VARCHAR(128) COMMENT 'Debug Token',
+    common JSON COMMENT '公共上下文JSON',
+    action JSON COMMENT '行为信息JSON',
+    business JSON COMMENT '业务字段JSON',
+    extra JSON COMMENT '额外扩展JSON',
+    payload JSON COMMENT '原始JSON payload',
     validate_status VARCHAR(64) COMMENT '校验状态: PASS, WARN, FAIL, UNKNOWN',
-    validate_errors TEXT COMMENT '校验错误JSON',
+    validate_errors JSON COMMENT '校验错误JSON',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at DATETIME DEFAULT NULL,
-    INDEX idx_app_code (app_code),
-    INDEX idx_event_code (event_code),
+    UNIQUE KEY uk_request_id (request_id),
+    INDEX idx_app_event_time (app_code, event_code, event_time),
     INDEX idx_debug_token (debug_token),
-    INDEX idx_user_id (user_id),
     INDEX idx_event_time (event_time),
-    INDEX idx_environment (environment)
+    INDEX idx_validate_status (validate_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='上报事件样本表';
 
 -- 方案事件关系表
@@ -358,20 +352,20 @@ INSERT INTO tracking_app (id, app_code, app_name, app_type, description, secret_
 VALUES (1000001, 'dataman_web', '数据平台 Web', 'WEB', 'cyan-dataman-web 前端自身埋点应用', 'system', '/rpc/data-collection/collect/events', 'ENABLED', 'system', 'system')
 ON DUPLICATE KEY UPDATE app_name = VALUES(app_name), app_type = VALUES(app_type), report_url = VALUES(report_url), status = VALUES(status), updated_at = CURRENT_TIMESTAMP;
 
--- platform_module_click 事件
+-- bigdata_module_click 事件
 INSERT INTO tracking_event (id, app_code, event_code, event_name, event_type, business_domain, description, trigger_timing, terminal_types, owner, is_core, status, version, created_by, updated_by)
-VALUES (1000001, 'dataman_web', 'platform_module_click', '模块点击', 'CLICK', 'platform', '平台模块点击事件，用于统计各模块的访问热度', '用户点击平台左侧菜单、顶部导航或首页模块卡片时触发', 'WEB', 'system', 1, 'PUBLISHED', 1, 'system', 'system')
+VALUES (1000001, 'dataman_web', 'bigdata_module_click', '模块点击', 'CLICK', 'bigdata', '平台模块点击事件，用于统计各模块的访问热度', '用户点击平台左侧菜单、顶部导航或首页模块卡片时触发', 'WEB', 'system', 1, 'PUBLISHED', 1, 'system', 'system')
 ON DUPLICATE KEY UPDATE app_code = VALUES(app_code), event_code = VALUES(event_code), business_domain = VALUES(business_domain), updated_at = CURRENT_TIMESTAMP;
 
 -- module_click 属性
 INSERT INTO tracking_property (id, property_code, property_name, property_type, data_type, description, is_required, is_sensitive, status, version, created_by, updated_by)
 VALUES
-(1000001, 'module_code', '模块编码', 'EVENT', 'STRING', '模块稳定编码，如 data_assets、data_collection', 1, 0, 'PUBLISHED', 1, 'system', 'system'),
-(1000002, 'module_name', '模块名称', 'EVENT', 'STRING', '模块名称，如 数据资产、数据采集', 1, 0, 'PUBLISHED', 1, 'system', 'system'),
-(1000003, 'parent_module_code', '父模块编码', 'EVENT', 'STRING', '父模块编码，如一级菜单编码', 0, 0, 'PUBLISHED', 1, 'system', 'system'),
-(1000004, 'route_path', '路由路径', 'EVENT', 'STRING', '点击后跳转的路由路径，如 /data-assets', 1, 0, 'PUBLISHED', 1, 'system', 'system'),
-(1000005, 'click_position', '点击位置', 'EVENT', 'STRING', '点击位置，如 sidebar_menu、top_nav、home_card', 0, 0, 'PUBLISHED', 1, 'system', 'system'),
-(1000006, 'source_page', '来源页面', 'EVENT', 'STRING', '点击来源页面编码', 0, 0, 'PUBLISHED', 1, 'system', 'system')
+(1000001, 'moduleCode', '模块编码', 'EVENT', 'STRING', '模块稳定编码，如 data_assets、data_collection', 1, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000002, 'moduleName', '模块名称', 'EVENT', 'STRING', '模块名称，如 数据资产、数据采集', 1, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000003, 'parentModuleCode', '父模块编码', 'EVENT', 'STRING', '父模块编码，如一级菜单编码', 0, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000004, 'routePath', '路由路径', 'EVENT', 'STRING', '点击后跳转的路由路径，如 /data-assets', 1, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000005, 'clickPosition', '点击位置', 'EVENT', 'STRING', '点击位置，如 sidebar_menu、top_nav、home_card', 0, 0, 'PUBLISHED', 1, 'system', 'system'),
+(1000006, 'sourcePage', '来源页面', 'EVENT', 'STRING', '点击来源页面编码', 0, 0, 'PUBLISHED', 1, 'system', 'system')
 ON DUPLICATE KEY UPDATE updated_at = CURRENT_TIMESTAMP;
 
 -- module_click 事件属性绑定

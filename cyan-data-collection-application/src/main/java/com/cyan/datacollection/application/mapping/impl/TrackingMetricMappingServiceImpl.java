@@ -17,6 +17,7 @@ import com.cyan.datacollection.domain.mapping.repository.TrackingEventMetricMapp
 import com.cyan.datacollection.domain.mapping.repository.TrackingPropertyDimensionMappingRepository;
 import com.cyan.datacollection.domain.property.TrackingProperty;
 import com.cyan.datacollection.domain.property.repository.TrackingPropertyRepository;
+import com.cyan.datacollection.enums.DataType;
 import com.cyan.datacollection.enums.EventType;
 import com.cyan.datacollection.enums.SyncStatus;
 import com.cyan.datametric.client.collection.MetricCollectionMappingClient;
@@ -160,7 +161,7 @@ public class TrackingMetricMappingServiceImpl implements TrackingMetricMappingSe
                 .setCategoryId(cmd.getCategoryId())
                 .setSourceTable("ods_tracking_frontend_other_event")
                 .setSourceType("JSON_PATH")
-                .setSourceExpr("$.properties." + property.getPropertyCode())
+                .setSourceExpr(resolvePropertySourceExpr(property.getPropertyCode()))
                 .setColumnName(property.getPropertyCode())
                 .setDescription(defaultString(property.getDescription(), "采集属性 " + property.getPropertyCode()))
                 .setOwner(defaultString(cmd.getOwner(), "system"))
@@ -218,13 +219,29 @@ public class TrackingMetricMappingServiceImpl implements TrackingMetricMappingSe
         if (property.getDataType() == null) {
             return "STRING";
         }
-        return switch (property.getDataType()) {
-            case NUMBER -> "DECIMAL";
-            case BOOLEAN -> "BOOLEAN";
-            case DATE -> "DATE";
-            case DATETIME -> "DATETIME";
-            default -> "STRING";
-        };
+        DataType dataType = property.getDataType();
+        if (dataType == DataType.NUMBER) {
+            return "DECIMAL";
+        }
+        if (dataType == DataType.BOOLEAN) {
+            return "BOOLEAN";
+        }
+        if (dataType == DataType.DATE) {
+            return "DATE";
+        }
+        if (dataType == DataType.DATETIME) {
+            return "DATETIME";
+        }
+        return "STRING";
+    }
+
+    private String resolvePropertySourceExpr(String propertyCode) {
+        return "COALESCE("
+                + "$.business." + propertyCode + ","
+                + "$.action." + propertyCode + ","
+                + "$.common." + propertyCode + ","
+                + "$.extra." + propertyCode
+                + ")";
     }
 
     private String defaultString(String value, String defaultValue) {

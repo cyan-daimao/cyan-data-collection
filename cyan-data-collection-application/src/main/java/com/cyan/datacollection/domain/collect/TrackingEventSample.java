@@ -3,8 +3,6 @@ package com.cyan.datacollection.domain.collect;
 import com.cyan.arch.common.api.Assert;
 import com.cyan.arch.common.api.SilentException;
 import com.cyan.datacollection.domain.collect.repository.TrackingEventSampleRepository;
-import com.cyan.datacollection.enums.Environment;
-import com.cyan.datacollection.enums.TerminalType;
 import com.cyan.datacollection.enums.ValidateStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -37,11 +35,6 @@ public class TrackingEventSample {
     private String appCode;
 
     /**
-     * Debug Token
-     */
-    private String debugToken;
-
-    /**
      * 事件编码
      */
     private String eventCode;
@@ -57,49 +50,29 @@ public class TrackingEventSample {
     private LocalDateTime ingestionTime;
 
     /**
-     * 端类型
+     * Debug Token
      */
-    private TerminalType terminalType;
+    private String debugToken;
 
     /**
-     * 环境
+     * 公共上下文JSON
      */
-    private Environment environment;
+    private String common;
 
     /**
-     * 用户ID
+     * 行为信息JSON
      */
-    private String userId;
+    private String action;
 
     /**
-     * 匿名ID
+     * 业务字段JSON
      */
-    private String anonymousId;
+    private String business;
 
     /**
-     * 会话ID
+     * 额外扩展JSON
      */
-    private String sessionId;
-
-    /**
-     * 设备ID
-     */
-    private String deviceId;
-
-    /**
-     * SDK版本
-     */
-    private String sdkVersion;
-
-    /**
-     * 应用版本
-     */
-    private String appVersion;
-
-    /**
-     * 页面编码
-     */
-    private String pageCode;
+    private String extra;
 
     /**
      * 请求ID

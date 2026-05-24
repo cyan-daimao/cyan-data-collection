@@ -133,16 +133,31 @@ public class TrackingEventValidateServiceImpl implements TrackingEventValidateSe
         if (dataType == null) {
             return null;
         }
-        return switch (dataType) {
-            case STRING -> value instanceof String ? null : "[FAIL] 属性 " + code + " 类型错误，期望 STRING";
-            case NUMBER -> value instanceof Number ? null : "[FAIL] 属性 " + code + " 类型错误，期望 NUMBER";
-            case BOOLEAN -> value instanceof Boolean ? null : "[FAIL] 属性 " + code + " 类型错误，期望 BOOLEAN";
-            case DATE -> validateDate(code, value);
-            case DATETIME -> validateDateTime(code, value);
-            case ENUM -> value instanceof String || value instanceof Number ? null : "[FAIL] 属性 " + code + " 类型错误，期望 ENUM";
-            case ARRAY -> (value instanceof Collection || value.getClass().isArray()) ? null : "[FAIL] 属性 " + code + " 类型错误，期望 ARRAY";
-            case OBJECT -> value instanceof Map ? null : "[FAIL] 属性 " + code + " 类型错误，期望 OBJECT";
-        };
+        if (dataType == DataType.STRING) {
+            return value instanceof String ? null : "[FAIL] 属性 " + code + " 类型错误，期望 STRING";
+        }
+        if (dataType == DataType.NUMBER) {
+            return value instanceof Number ? null : "[FAIL] 属性 " + code + " 类型错误，期望 NUMBER";
+        }
+        if (dataType == DataType.BOOLEAN) {
+            return value instanceof Boolean ? null : "[FAIL] 属性 " + code + " 类型错误，期望 BOOLEAN";
+        }
+        if (dataType == DataType.DATE) {
+            return validateDate(code, value);
+        }
+        if (dataType == DataType.DATETIME) {
+            return validateDateTime(code, value);
+        }
+        if (dataType == DataType.ENUM) {
+            return value instanceof String || value instanceof Number ? null : "[FAIL] 属性 " + code + " 类型错误，期望 ENUM";
+        }
+        if (dataType == DataType.ARRAY) {
+            return (value instanceof Collection || value.getClass().isArray()) ? null : "[FAIL] 属性 " + code + " 类型错误，期望 ARRAY";
+        }
+        if (dataType == DataType.OBJECT) {
+            return value instanceof Map ? null : "[FAIL] 属性 " + code + " 类型错误，期望 OBJECT";
+        }
+        return null;
     }
 
     private String validateDate(String code, Object value) {

@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cyan.datacollection.domain.collect.TrackingEventSample;
 import com.cyan.datacollection.domain.collect.query.TrackingEventSamplePageQuery;
 import com.cyan.datacollection.domain.collect.repository.TrackingEventSampleRepository;
-import com.cyan.datacollection.enums.Environment;
 import com.cyan.datacollection.infra.persistence.collect.convert.TrackingEventSampleInfraConvert;
 import com.cyan.datacollection.infra.persistence.collect.dos.TrackingEventSampleDO;
 import com.cyan.datacollection.infra.persistence.collect.mappers.TrackingEventSampleMapper;
@@ -45,7 +44,8 @@ public class TrackingEventSampleRepositoryImpl implements TrackingEventSampleRep
                 .eq(StringUtils.isNotBlank(query.getDebugToken()), TrackingEventSampleDO::getDebugToken, query.getDebugToken())
                 .eq(StringUtils.isNotBlank(query.getAppCode()), TrackingEventSampleDO::getAppCode, query.getAppCode())
                 .eq(StringUtils.isNotBlank(query.getEventCode()), TrackingEventSampleDO::getEventCode, query.getEventCode())
-                .eq(StringUtils.isNotBlank(query.getEnvironment()), TrackingEventSampleDO::getEnvironment, Environment.of(query.getEnvironment()))
+                .apply(StringUtils.isNotBlank(query.getEnvironment()),
+                        "JSON_UNQUOTE(JSON_EXTRACT(common, '$.environment')) = {0}", query.getEnvironment())
                 .orderByDesc(TrackingEventSampleDO::getCreatedAt);
         Page<TrackingEventSampleDO> result = trackingEventSampleMapper.selectPage(page, wrapper);
         List<TrackingEventSample> list = Optional.ofNullable(result.getRecords()).orElse(List.of()).stream()

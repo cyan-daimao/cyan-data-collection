@@ -284,7 +284,7 @@ public class TrackingAcceptanceServiceImpl implements TrackingAcceptanceService 
 
         for (TrackingEventSample sample : samples) {
             Map<String, Object> payloadMap = com.alibaba.fastjson2.JSON.parseObject(sample.getPayload(), Map.class);
-            Map<String, Object> properties = payloadMap != null ? (Map<String, Object>) payloadMap.get("properties") : null;
+            Map<String, Object> properties = mergePayloadProperties(payloadMap);
             if (properties == null) {
                 missingCount++;
                 continue;
@@ -331,5 +331,30 @@ public class TrackingAcceptanceServiceImpl implements TrackingAcceptanceService 
             errors.add(String.format("属性 %s: %d 个样本枚举值不合法", property.getPropertyCode(), enumErrorCount));
         }
         return errors;
+    }
+
+    /**
+     * 合并四段上报属性
+     */
+    private Map<String, Object> mergePayloadProperties(Map<String, Object> payloadMap) {
+        if (payloadMap == null) {
+            return null;
+        }
+        Map<String, Object> merged = new java.util.LinkedHashMap<>();
+        mergeSection(merged, payloadMap.get("common"));
+        mergeSection(merged, payloadMap.get("action"));
+        mergeSection(merged, payloadMap.get("business"));
+        mergeSection(merged, payloadMap.get("extra"));
+        return merged;
+    }
+
+    /**
+     * 合并单段属性
+     */
+    @SuppressWarnings("unchecked")
+    private void mergeSection(Map<String, Object> merged, Object section) {
+        if (section instanceof Map<?, ?> map) {
+            merged.putAll((Map<String, Object>) map);
+        }
     }
 }

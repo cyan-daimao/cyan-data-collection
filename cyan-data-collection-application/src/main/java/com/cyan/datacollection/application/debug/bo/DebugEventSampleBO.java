@@ -39,6 +39,10 @@ public class DebugEventSampleBO {
     private String appVersion;
     private String pageCode;
     private String requestId;
+    private String common;
+    private String action;
+    private String business;
+    private String extra;
     private String payload;
     private ValidateStatus validateStatus;
     private List<String> validateErrors;
