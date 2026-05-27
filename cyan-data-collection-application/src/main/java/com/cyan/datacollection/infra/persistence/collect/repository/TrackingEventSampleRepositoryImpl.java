@@ -13,6 +13,8 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,6 +48,14 @@ public class TrackingEventSampleRepositoryImpl implements TrackingEventSampleRep
                 .eq(StringUtils.isNotBlank(query.getEventCode()), TrackingEventSampleDO::getEventCode, query.getEventCode())
                 .apply(StringUtils.isNotBlank(query.getEnvironment()),
                         "JSON_UNQUOTE(JSON_EXTRACT(common, '$.environment')) = {0}", query.getEnvironment())
+                .apply(StringUtils.isNotBlank(query.getEmployeeId()),
+                        "JSON_UNQUOTE(JSON_EXTRACT(business, '$.employee_id')) = {0}", query.getEmployeeId())
+                .apply(StringUtils.isNotBlank(query.getAnonymousId()),
+                        "JSON_UNQUOTE(JSON_EXTRACT(common, '$.anonymous_id')) = {0}", query.getAnonymousId())
+                .apply(StringUtils.isNotBlank(query.getDeviceId()),
+                        "JSON_UNQUOTE(JSON_EXTRACT(common, '$.device_id')) = {0}", query.getDeviceId())
+                .ge(parseDateTime(query.getStartTime()) != null, TrackingEventSampleDO::getEventTime, parseDateTime(query.getStartTime()))
+                .le(parseDateTime(query.getEndTime()) != null, TrackingEventSampleDO::getEventTime, parseDateTime(query.getEndTime()))
                 .orderByDesc(TrackingEventSampleDO::getCreatedAt);
         Page<TrackingEventSampleDO> result = trackingEventSampleMapper.selectPage(page, wrapper);
         List<TrackingEventSample> list = Optional.ofNullable(result.getRecords()).orElse(List.of()).stream()
@@ -84,5 +94,23 @@ public class TrackingEventSampleRepositoryImpl implements TrackingEventSampleRep
             sample.setId(String.valueOf(trackingEventSampleDO.getId()));
         }
         return samples;
+    }
+
+    /**
+     * 解析查询时间
+     */
+    private LocalDateTime parseDateTime(String value) {
+        if (StringUtils.isBlank(value)) {
+            return null;
+        }
+        try {
+            return LocalDateTime.parse(value, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        } catch (DateTimeParseException ignored) {
+            try {
+                return LocalDateTime.parse(value);
+            } catch (DateTimeParseException ex) {
+                return null;
+            }
+        }
     }
 }

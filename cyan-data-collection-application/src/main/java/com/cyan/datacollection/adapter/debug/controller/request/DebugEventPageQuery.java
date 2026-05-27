@@ -43,4 +43,29 @@ public class DebugEventPageQuery {
      * 环境
      */
     private String environment;
+
+    /**
+     * 员工ID
+     */
+    private String employeeId;
+
+    /**
+     * 匿名ID
+     */
+    private String anonymousId;
+
+    /**
+     * 设备ID
+     */
+    private String deviceId;
+
+    /**
+     * 开始时间
+     */
+    private String startTime;
+
+    /**
+     * 结束时间
+     */
+    private String endTime;
 }
